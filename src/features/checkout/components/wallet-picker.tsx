@@ -5,10 +5,9 @@ import { NETWORKS, type Network, type Wallet } from '@/contracts'
 import { walletConnection, WalletConnectError, type Connection } from '@/features/wallets/connection'
 import { NETWORK_LABEL, shortAddress } from '@/features/wallets/queries'
 import { notify } from '@/lib/notify'
+import { RadioDot, radioRowClass as radio, radioRowOff, radioRowOn } from '@/components/form-field'
 import { cn } from '@/lib/utils'
 
-const radio =
-  'flex cursor-pointer items-center gap-3 rounded-[10px] border px-4 py-3 text-sm outline-none has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring'
 
 /**
  * Rede → carteiras daquela rede → conexão com a extensão. O pedido exige carteira da mesma rede (contrato) e
@@ -63,14 +62,15 @@ export function WalletPicker({
   return (
     <div className="flex flex-col gap-6">
       <fieldset className="flex flex-col gap-3">
-        <legend className="mb-3 text-base font-bold text-foreground">Rede</legend>
-        <div className="grid grid-cols-3 gap-2">
+        <legend className="mb-3 text-lg leading-6 font-bold text-foreground">Rede</legend>
+        <div className="grid gap-3 sm:grid-cols-3">
           {NETWORKS.map((n) => (
             <label
               key={n}
-              className={cn(radio, 'justify-center', n === network ? 'border-primary bg-surface-dark font-bold text-brand' : 'border-border-soft text-foreground')}
+              className={cn(radio, n === network ? radioRowOn : radioRowOff, 'text-foreground')}
             >
               <input type="radio" name={`${id}-network`} value={n} checked={n === network} onChange={() => onNetwork(n)} className="sr-only" />
+              <RadioDot checked={n === network} />
               {NETWORK_LABEL[n]}
             </label>
           ))}
@@ -78,7 +78,7 @@ export function WalletPicker({
       </fieldset>
 
       <fieldset className="flex flex-col gap-3" aria-describedby={error ? `${id}-error` : undefined}>
-        <legend className="mb-3 text-base font-bold text-foreground">Carteira</legend>
+        <legend className="mb-3 text-lg leading-6 font-bold text-foreground">Carteira</legend>
         {inNetwork.length === 0 ? (
           <p className="rounded-[10px] border border-dashed border-border-soft p-4 text-sm text-muted-foreground">
             Nenhuma carteira cadastrada na rede {NETWORK_LABEL[network]}. Escolha outra rede ou{' '}
@@ -89,15 +89,16 @@ export function WalletPicker({
           </p>
         ) : (
           inNetwork.map((w) => (
-            <label key={w.id} className={cn(radio, w.id === walletId ? 'border-primary bg-surface-dark' : 'border-border-soft')}>
+            <label key={w.id} className={cn(radio, w.id === walletId ? radioRowOn : radioRowOff)}>
               <input
                 type="radio"
                 name={`${id}-wallet`}
                 value={w.id}
                 checked={w.id === walletId}
                 onChange={() => onWallet(w.id)}
-                className="size-4 accent-primary"
+                className="sr-only"
               />
+              <RadioDot checked={w.id === walletId} />
               <WalletIcon className="size-5 shrink-0 text-brand" aria-hidden />
               <span className="flex min-w-0 flex-col">
                 <span className="text-foreground">
@@ -146,7 +147,7 @@ export function WalletPicker({
                 type="button"
                 onClick={() => void connect()}
                 disabled={connecting}
-                className="h-10 rounded-md border border-primary px-4 text-sm font-bold text-brand outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60"
+                className="h-10 rounded-[2px] border border-primary px-4 text-sm font-bold text-brand outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60"
               >
                 {connecting ? 'Aguardando a carteira…' : 'Conectar carteira'}
               </button>

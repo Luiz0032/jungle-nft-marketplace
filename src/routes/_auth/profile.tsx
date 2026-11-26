@@ -1,11 +1,11 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useQuery } from '@tanstack/react-query'
-import { createFileRoute, Link } from '@tanstack/react-router'
-import { Loader2, Upload, Wallet } from 'lucide-react'
+import { createFileRoute } from '@tanstack/react-router'
+import { Loader2, Upload } from 'lucide-react'
 import { useId, useRef, useState, type ChangeEvent } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
-import { FormAlert, FormField, outlineButtonClass, primaryButtonClass } from '@/components/form-field'
+import { FormAlert, FormField, primaryButtonClass } from '@/components/form-field'
 import { Button } from '@/components/ui/button'
 import {
   AVATAR_MAX_BYTES,
@@ -17,21 +17,22 @@ import {
   type Profile,
 } from '@/contracts'
 import { applyServerError } from '@/features/auth/components/form-errors'
+import { AccountShell } from '@/features/profile/components/account-shell'
 import { UserAvatar } from '@/features/profile/components/user-avatar'
 import { profileQuery, useChangePassword, useUpdateProfile, useUploadAvatar } from '@/features/profile/queries'
 import { ApiRequestError } from '@/lib/http'
 import { notify } from '@/lib/notify'
 
 /**
- * Perfil do colecionador — Figma desktop 9:1238 (sem frame mobile). Sem referência visual nesta sessão:
- * montado com os tokens e os padrões do checkout (ver ARCHITECTURE §12).
+ * Perfil do colecionador — Figma desktop 9:1238 (sem frame mobile): sidebar "Meu perfil" + formulário em duas
+ * colunas, avatar à direita e "Alterar senha" à esquerda. Campos e botões sem cartão, como no Figma.
  */
 export const Route = createFileRoute('/_auth/profile')({
   component: ProfilePage,
 })
 
-const card = 'flex flex-col gap-5 rounded-[10px] bg-surface p-5 lg:p-6'
-const cardTitle = 'text-lg font-bold text-foreground'
+const block = 'flex flex-col gap-5'
+const blockTitle = 'text-base leading-5 font-bold text-foreground'
 
 function ProfilePage() {
   const { session } = Route.useRouteContext()
@@ -39,40 +40,35 @@ function ProfilePage() {
   const profile = useQuery(profileQuery(userId))
 
   return (
-    <section aria-labelledby="page-title" className="flex flex-col gap-6 pt-2 pb-10 lg:pt-8">
-      <div className="flex flex-col gap-1">
-        <h1 id="page-title" className="text-[22px] leading-[29px] text-foreground lg:text-heading lg:font-bold">
-          Meu perfil
+    <AccountShell active="profile">
+      <section aria-labelledby="page-title" className="flex flex-col gap-6">
+        <h1 id="page-title" className="text-base leading-5 font-bold text-foreground">
+          Perfil do colecionador
         </h1>
-        <p className="text-sm text-muted-foreground">Seus dados de colecionador, foto e senha.</p>
-      </div>
 
-      {profile.isPending ? (
-        <ProfileSkeleton />
-      ) : profile.isError ? (
-        <div role="alert" className="flex flex-col items-start gap-3 rounded-[10px] bg-surface p-6">
-          <p className="text-coral">Não foi possível carregar seu perfil.</p>
-          <Button variant="outline" onClick={() => void profile.refetch()}>
-            Tentar de novo
-          </Button>
-        </div>
-      ) : (
-        <div className="grid gap-6 lg:grid-cols-[380px_1fr] lg:items-start" aria-busy={profile.isFetching}>
-          <div className="flex flex-col gap-6">
-            <AvatarCard profile={profile.data} />
-            <Link to="/wallets" className={`${outlineButtonClass} h-[50px] w-full`}>
-              <Wallet className="size-4" aria-hidden />
-              Gerenciar carteiras
-            </Link>
+        {profile.isPending ? (
+          <ProfileSkeleton />
+        ) : profile.isError ? (
+          <div role="alert" className="flex flex-col items-start gap-3 rounded-[10px] bg-surface p-6">
+            <p className="text-coral">Não foi possível carregar seu perfil.</p>
+            <Button variant="outline" onClick={() => void profile.refetch()}>
+              Tentar de novo
+            </Button>
           </div>
-          <div className="flex min-w-0 flex-col gap-6">
+        ) : (
+          <div className="grid gap-x-7 gap-y-10 lg:grid-cols-2" aria-busy={profile.isFetching}>
             {/* `key`: dados novos do servidor (outro dispositivo, refetch) recriam o formulário limpo. */}
             <ProfileForm key={`${profile.data.name}|${profile.data.email}`} profile={profile.data} />
-            <PasswordForm />
+            <div className="lg:col-start-2 lg:row-start-2">
+              <AvatarCard profile={profile.data} />
+            </div>
+            <div className="lg:col-start-1 lg:row-start-2">
+              <PasswordForm />
+            </div>
           </div>
-        </div>
-      )}
-    </section>
+        )}
+      </section>
+    </AccountShell>
   )
 }
 
@@ -131,14 +127,14 @@ function AvatarCard({ profile }: { profile: Profile }) {
   }
 
   return (
-    <section aria-labelledby={`${id}-title`} className={card}>
-      <h2 id={`${id}-title`} className="sr-only">
-        Foto de perfil
+    <section aria-labelledby={`${id}-title`} className="flex flex-col gap-2">
+      <h2 id={`${id}-title`} className="text-[15px] leading-5 text-foreground">
+        Avatar
       </h2>
-      <div className="flex items-center gap-4">
-        <UserAvatar user={profile} className="size-20 shrink-0 text-3xl" />
-        <div className="min-w-0">
-          <p className="truncate text-lg font-bold text-foreground" data-testid="profile-name">
+      <div className="flex flex-wrap items-center gap-6">
+        <UserAvatar user={profile} className="size-[50px] shrink-0 border border-border-soft text-xl" />
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-base font-bold text-foreground" data-testid="profile-name">
             {profile.name}
           </p>
           <p className="truncate text-sm text-muted-foreground" data-testid="profile-email">
@@ -160,11 +156,17 @@ function AvatarCard({ profile }: { profile: Profile }) {
         />
         <label
           htmlFor={`${id}-file`}
-          className={`${outlineButtonClass} cursor-pointer aria-disabled:cursor-not-allowed aria-disabled:opacity-60 [input:focus-visible+&]:ring-2 [input:focus-visible+&]:ring-ring`}
+          className={`${primaryButtonClass} w-fit cursor-pointer px-6 aria-disabled:cursor-not-allowed aria-disabled:opacity-60 [input:focus-visible+&]:ring-2 [input:focus-visible+&]:ring-ring`}
           aria-disabled={busy || undefined}
         >
           {busy ? <Loader2 className="size-4 animate-spin motion-reduce:animate-none" aria-hidden /> : <Upload className="size-4" aria-hidden />}
-          {busy ? 'Enviando foto…' : 'Alterar foto'}
+          {busy ? (
+            'Enviando foto…'
+          ) : (
+            <>
+              Alterar<span className="sr-only"> foto</span>
+            </>
+          )}
         </label>
         <p id={`${id}-hint`} className="text-xs text-subtle">
           PNG, JPEG ou WebP, até {MAX_MB} MB.
@@ -206,17 +208,17 @@ function ProfileForm({ profile }: { profile: Profile }) {
   })
 
   return (
-    <section aria-labelledby={`${id}-title`} className={card}>
-      <h2 id={`${id}-title`} className={cardTitle}>
+    <section aria-labelledby={`${id}-title`} className={`${block} lg:col-span-2`}>
+      <h2 id={`${id}-title`} className="sr-only">
         Dados pessoais
       </h2>
-      <form onSubmit={(e) => void onSubmit(e)} noValidate className="flex flex-col gap-4">
-        <div className="grid gap-4 sm:grid-cols-2">
-          <FormField id={`${id}-name`} label="Nome" autoComplete="name" error={errors.name?.message} {...form.register('name')} />
-          <FormField id={`${id}-email`} label="E-mail" type="email" autoComplete="email" error={errors.email?.message} {...form.register('email')} />
+      <form onSubmit={(e) => void onSubmit(e)} noValidate className="flex flex-col gap-6">
+        <div className="grid gap-6 lg:grid-cols-2 lg:gap-x-7">
+          <FormField id={`${id}-name`} label="Nome" requiredMark autoComplete="name" error={errors.name?.message} {...form.register('name')} />
+          <FormField id={`${id}-email`} label="E-mail" requiredMark type="email" autoComplete="email" error={errors.email?.message} {...form.register('email')} />
         </div>
         <FormAlert message={errors.root?.server?.message} />
-        <button type="submit" disabled={!isDirty || update.isPending} className={`${primaryButtonClass} self-start`}>
+        <button type="submit" disabled={!isDirty || update.isPending} className={`${primaryButtonClass} self-start px-8`}>
           {update.isPending && <Loader2 className="size-4 animate-spin motion-reduce:animate-none" aria-hidden />}
           Salvar dados
         </button>
@@ -255,11 +257,11 @@ function PasswordForm() {
   })
 
   return (
-    <section aria-labelledby={`${id}-title`} className={card}>
-      <h2 id={`${id}-title`} className={cardTitle}>
+    <section aria-labelledby={`${id}-title`} className={block}>
+      <h2 id={`${id}-title`} className={blockTitle}>
         Alterar senha
       </h2>
-      <form onSubmit={(e) => void onSubmit(e)} noValidate className="flex flex-col gap-4">
+      <form onSubmit={(e) => void onSubmit(e)} noValidate className="flex flex-col gap-5">
         <FormField
           id={`${id}-current`}
           label="Senha atual"
@@ -268,7 +270,7 @@ function PasswordForm() {
           error={errors.current?.message}
           {...form.register('current')}
         />
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="flex flex-col gap-5">
           <FormField
             id={`${id}-next`}
             label="Nova senha"
@@ -288,7 +290,7 @@ function PasswordForm() {
           />
         </div>
         <FormAlert message={errors.root?.server?.message} />
-        <button type="submit" disabled={change.isPending} className={`${primaryButtonClass} self-start`}>
+        <button type="submit" disabled={change.isPending} className={`${primaryButtonClass} mt-2 self-start px-8`}>
           {change.isPending && <Loader2 className="size-4 animate-spin motion-reduce:animate-none" aria-hidden />}
           Alterar senha
         </button>
@@ -299,12 +301,13 @@ function PasswordForm() {
 
 function ProfileSkeleton() {
   return (
-    <div className="grid gap-6 lg:grid-cols-[380px_1fr]" role="status" aria-busy="true" aria-label="Carregando perfil">
-      <div className="shimmer h-[212px] rounded-[10px]" />
-      <div className="flex flex-col gap-6">
-        <div className="shimmer h-[196px] rounded-[10px]" />
-        <div className="shimmer h-[264px] rounded-[10px]" />
-      </div>
+    <div className="grid gap-x-7 gap-y-6 lg:grid-cols-2" role="status" aria-busy="true" aria-label="Carregando perfil">
+      {Array.from({ length: 4 }, (_, i) => (
+        <div key={i} className="flex flex-col gap-2">
+          <div className="shimmer h-5 w-32 rounded-sm" />
+          <div className="shimmer h-10 w-full rounded-[2px]" />
+        </div>
+      ))}
     </div>
   )
 }

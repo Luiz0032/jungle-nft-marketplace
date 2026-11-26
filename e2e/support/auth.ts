@@ -14,7 +14,7 @@ export async function submitLogin(page: Page, user: { email: string; password: s
 export async function loginAs(page: Page, user: { email: string; password: string }, redirect = '/') {
   await page.goto(`/login?redirect=${encodeURIComponent(redirect)}`)
   await submitLogin(page, user)
-  await expect(page.getByRole('button', { name: 'Sair' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Sair', exact: true })).toBeVisible()
 }
 
 export const isMobile = (page: Page) => (page.viewportSize()?.width ?? 0) < 1024

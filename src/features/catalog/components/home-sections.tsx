@@ -15,7 +15,7 @@ export function HomeHero() {
       aria-labelledby="hero-title"
       className="relative flex items-center gap-4 overflow-hidden rounded-[20px] bg-surface p-4 lg:h-[450px] lg:justify-between lg:rounded-none lg:bg-transparent lg:p-0 lg:pl-10"
     >
-      <div className="flex min-w-0 flex-1 flex-col gap-2 lg:max-w-[600px] lg:gap-0">
+      <div className="flex min-w-0 flex-1 flex-col gap-2 lg:max-w-[600px] lg:gap-0 lg:self-start lg:pt-[50px]">
         <p className="text-xs text-foreground lg:mb-3 lg:text-sm">Bem-vindo à Kurio</p>
         <h1 id="hero-title" className="text-xl leading-[30px] font-bold text-foreground uppercase lg:text-display lg:leading-[70px]">
           <span className="lg:hidden">Seja dono da cultura digital</span>
@@ -34,7 +34,7 @@ export function HomeHero() {
         </p>
         <a
           href="#catalogo"
-          className="mt-1 inline-flex items-center gap-2 self-start rounded-md text-sm font-bold text-brand uppercase outline-none focus-visible:ring-2 focus-visible:ring-ring lg:mt-10 lg:h-10 lg:w-[140px] lg:justify-center lg:bg-primary lg:text-base lg:text-primary-foreground lg:hover:bg-primary/90"
+          className="mt-1 inline-flex items-center gap-2 self-start rounded-md text-sm font-bold text-brand uppercase outline-none focus-visible:ring-2 focus-visible:ring-ring lg:mt-8 lg:h-10 lg:w-[140px] lg:justify-center lg:bg-primary lg:text-base lg:text-primary-foreground lg:hover:bg-primary/90"
         >
           Explorar
           <ArrowRight aria-hidden className="size-4 lg:hidden" />
@@ -48,10 +48,10 @@ export function HomeHero() {
         fetchPriority="high"
         className="size-[140px] shrink-0 rounded-[15px] object-cover lg:size-[450px] lg:rounded-[20px]"
       />
-      <span aria-hidden="true" className="absolute bottom-2 left-1/2 flex -translate-x-1/2 gap-1.5 lg:bottom-10 lg:left-[600px]">
+      <span aria-hidden="true" className="absolute bottom-2 left-1/2 flex -translate-x-1/2 gap-1.5 lg:bottom-11 lg:left-[620px]">
         <span className="size-2 rounded-full bg-primary" />
-        <span className="size-2 rounded-full bg-primary/60" />
-        <span className="size-2 rounded-full bg-primary/60" />
+        <span className="size-2 rounded-full bg-primary lg:bg-primary/60" />
+        <span className="size-2 rounded-full bg-primary lg:bg-primary/60" />
       </span>
     </section>
   )

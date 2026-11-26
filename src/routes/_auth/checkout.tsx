@@ -4,6 +4,7 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 import { AlertTriangle, Loader2 } from 'lucide-react'
 import { useEffect, useId, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
+import { Breadcrumb, MobileTitle } from '@/components/breadcrumb'
 import { FormField } from '@/components/form-field'
 import { Button } from '@/components/ui/button'
 import { CollectorSchema, type Collector, type Network, type Quote, type User } from '@/contracts'
@@ -125,22 +126,13 @@ function Checkout({ user }: { user: User }) {
 
   return (
     <div className="flex flex-col gap-6 pt-2 pb-8 lg:pt-8">
-      <nav aria-label="Trilha" className="hidden text-sm text-muted-foreground lg:block">
-        <ol className="flex gap-1">
-          <li>
-            <Link to="/cart" className="rounded-sm hover:text-brand">
-              Carrinho
-            </Link>{' '}
-            /
-          </li>
-          <li aria-current="page" className="text-foreground">
-            Pagamento
-          </li>
-        </ol>
-      </nav>
+      <Breadcrumb items={[{ label: 'Início', link: { to: '/' } }, { label: 'Mercado', link: { to: '/', hash: 'catalogo' } }, { label: 'Carrinho', link: { to: '/cart' } }, { label: 'Pagamento' }]} />
       <div className="flex flex-col gap-2">
-        <h1 className="text-[22px] leading-[29px] text-foreground lg:text-heading lg:font-bold">Pagamento</h1>
-        <ol className="flex gap-4 text-sm" aria-label="Etapas">
+        {/* Figma: o desktop não tem título visível (a trilha termina em "Pagamento"); o mobile tem. */}
+        <MobileTitle back={{ to: '/cart' }} backLabel="Voltar ao carrinho">
+          Pagamento com carteira
+        </MobileTitle>
+        <ol className="flex justify-center gap-4 text-sm lg:justify-start" aria-label="Etapas">
           <li className={step === 'details' ? 'font-bold text-brand' : 'text-muted-foreground'} aria-current={step === 'details' ? 'step' : undefined}>
             1. Dados e carteira
           </li>
@@ -152,17 +144,17 @@ function Checkout({ user }: { user: User }) {
 
       <PhaseNotice phase={place.phase} onDiscard={place.discardOpen} onDismiss={place.clearFailure} />
 
-      <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:gap-12">
-        <div className="flex min-w-0 flex-1 flex-col gap-8">
+      <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between lg:gap-8">
+        <div className="flex min-w-0 flex-1 flex-col gap-8 lg:max-w-[763px]">
           {step === 'details' ? (
             <form id={formId} onSubmit={(e) => void toReview(e)} noValidate className="flex flex-col gap-8">
               <h2 ref={stepHeading} tabIndex={-1} className="sr-only">
                 Dados e carteira
               </h2>
-              <fieldset className="flex flex-col gap-4">
-                <legend className="mb-4 text-base font-bold text-foreground">Dados do colecionador</legend>
-                <FormField id={`${formId}-name`} label="Nome completo" error={form.formState.errors.name?.message} {...form.register('name')} autoComplete="name" />
-                <FormField id={`${formId}-email`} label="E-mail" type="email" error={form.formState.errors.email?.message} {...form.register('email')} autoComplete="email" />
+              <fieldset className="grid gap-4 lg:grid-cols-2 lg:gap-x-6">
+                <legend className="mb-4 text-lg leading-6 font-bold text-foreground">Perfil do colecionador</legend>
+                <FormField id={`${formId}-name`} label="Nome completo" requiredMark error={form.formState.errors.name?.message} {...form.register('name')} autoComplete="name" />
+                <FormField id={`${formId}-email`} label="E-mail" requiredMark type="email" error={form.formState.errors.email?.message} {...form.register('email')} autoComplete="email" />
               </fieldset>
               <WalletPicker
                 userId={user.id}
@@ -184,7 +176,7 @@ function Checkout({ user }: { user: User }) {
               <button
                 type="submit"
                 disabled={!quote.data || quote.isError}
-                className="h-[50px] rounded-md bg-primary text-base font-bold text-primary-foreground outline-none hover:bg-primary/90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-60 lg:w-[260px]"
+                className="h-[60px] rounded-full bg-linear-to-r from-primary to-[#b5743f] text-base font-bold text-primary-foreground outline-none hover:brightness-105 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-60 lg:h-[45px] lg:w-[260px] lg:rounded-[2px] lg:bg-primary lg:bg-none"
               >
                 Revisar pedido
               </button>
@@ -225,7 +217,7 @@ function Checkout({ user }: { user: User }) {
                     setStep('details')
                   }}
                   disabled={busy}
-                  className="h-[50px] rounded-md border border-primary px-6 text-base font-bold text-brand outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60"
+                  className="h-[45px] rounded-[2px] border border-primary px-6 text-base font-bold text-brand outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60"
                 >
                   Voltar e editar
                 </button>
@@ -234,7 +226,7 @@ function Checkout({ user }: { user: User }) {
                   onClick={confirm}
                   disabled={!canConfirm && place.phase.kind !== 'unresolved'}
                   aria-busy={busy}
-                  className="flex h-[50px] items-center justify-center gap-2 rounded-md bg-primary px-6 text-base font-bold text-primary-foreground outline-none hover:bg-primary/90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-60 sm:min-w-[260px]"
+                  className="flex h-[45px] items-center justify-center gap-2 rounded-[2px] bg-primary px-6 text-base font-bold text-primary-foreground outline-none hover:bg-primary/90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-60 sm:min-w-[260px]"
                 >
                   {busy && <Loader2 className="size-4 animate-spin motion-reduce:animate-none" aria-hidden />}
                   {busy ? 'Processando…' : place.phase.kind === 'unresolved' ? 'Reenviar pedido' : 'Confirmar pagamento'}
@@ -244,9 +236,9 @@ function Checkout({ user }: { user: User }) {
           )}
         </div>
 
-        <aside aria-labelledby={`${formId}-summary`} aria-busy={quote.isFetching} className="flex flex-col gap-4 rounded-[10px] bg-surface p-6 lg:sticky lg:top-6 lg:w-[380px] lg:shrink-0">
-          <h2 id={`${formId}-summary`} className="text-lg font-bold text-foreground">
-            Resumo do pedido
+        <aside aria-labelledby={`${formId}-summary`} aria-busy={quote.isFetching} className="flex flex-col gap-3 lg:sticky lg:top-6 lg:w-[405px] lg:shrink-0">
+          <h2 id={`${formId}-summary`} className="text-lg leading-6 font-bold text-foreground">
+            Seus NFTs
           </h2>
           {quote.isPending ? (
             <div className="flex flex-col gap-3" role="status" aria-label="Calculando resumo">
@@ -384,7 +376,7 @@ function CheckoutSkeleton() {
         <div className="shimmer h-10 w-full rounded-md" />
         <div className="shimmer h-24 w-full rounded-[10px]" />
       </div>
-      <div className="shimmer h-[360px] rounded-[10px] lg:w-[380px]" />
+      <div className="shimmer h-[360px] rounded-[10px] lg:w-[405px]" />
     </div>
   )
 }

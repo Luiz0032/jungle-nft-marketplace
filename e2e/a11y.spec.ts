@@ -1,6 +1,6 @@
 import AxeBuilder from '@axe-core/playwright'
 import { expect, test, type Page } from '@playwright/test'
-import { ANA, isMobile, loginAs } from './support/auth'
+import { ANA, loginAs } from './support/auth'
 import { bootMock } from './support/mock'
 
 const NFT = 'nft-002'
@@ -64,11 +64,11 @@ test.describe('acessibilidade @a11y', () => {
     await addToCart(page)
 
     await page.goto('/cart')
-    await expect(page.getByRole('link', { name: 'Finalizar compra' })).toBeVisible()
+    await expect(page.getByRole('link', { name: 'Conectar e finalizar' })).toBeVisible()
     await expectNoAxeViolations(page)
     await noHorizontalOverflow(page)
 
-    await page.getByRole('link', { name: 'Finalizar compra' }).click()
+    await page.getByRole('link', { name: 'Conectar e finalizar' }).click()
     await expect(page.getByRole('heading', { name: 'Pagamento', level: 1 })).toBeVisible()
     await expectNoAxeViolations(page)
     await noHorizontalOverflow(page)
@@ -88,7 +88,7 @@ test.describe('acessibilidade @a11y', () => {
     await loginAs(page, ANA, `/nft/${NFT}`)
     await addToCart(page)
     await page.goto('/cart')
-    await page.getByRole('link', { name: 'Finalizar compra' }).click()
+    await page.getByRole('link', { name: 'Conectar e finalizar' }).click()
     await page.getByRole('button', { name: 'Conectar carteira' }).click()
     await page.getByRole('dialog', { name: /KurioWallet/ }).getByRole('button', { name: 'Conectar', exact: true }).click()
     await page.getByRole('button', { name: 'Revisar pedido' }).click()
@@ -185,8 +185,8 @@ test.describe('acessibilidade @a11y', () => {
     await expect(invalid.first()).toBeFocused()
   })
 
-  test('sheet de filtros (Radix Dialog) prende o foco, Esc fecha e devolve o foco', async ({ page }) => {
-    test.skip(!isMobile(page), 'o sheet de filtros só existe abaixo de lg')
+  // O sheet de filtros só existe abaixo de lg: roda só no projeto mobile (filtro em playwright.config).
+  test('sheet de filtros (Radix Dialog) prende o foco, Esc fecha e devolve o foco @mobile-only', async ({ page }) => {
     await page.goto('/')
     const trigger = page.getByRole('button', { name: /^Filtros/ })
     await trigger.focus()
@@ -207,7 +207,7 @@ test.describe('acessibilidade @a11y', () => {
     await loginAs(page, ANA, `/nft/${NFT}`)
     await addToCart(page)
     await page.goto('/cart')
-    await page.getByRole('link', { name: 'Finalizar compra' }).click()
+    await page.getByRole('link', { name: 'Conectar e finalizar' }).click()
     const trigger = page.getByRole('button', { name: 'Conectar carteira' })
     await trigger.focus()
     await page.keyboard.press('Enter')
@@ -233,8 +233,8 @@ test.describe('acessibilidade @a11y', () => {
     expect(animated).toBe(0)
   })
 
-  test('zoom 200% (viewport pela metade) mantém conteúdo sem overflow horizontal', async ({ page }) => {
-    test.skip(isMobile(page), 'equivalente ao desktop a 200%; o mobile já é 390px')
+  // Desktop a 200% = viewport 720×450; o mobile já é 390px.
+  test('zoom 200% (viewport pela metade) mantém conteúdo sem overflow horizontal @desktop-only', async ({ page }) => {
     await page.setViewportSize({ width: 720, height: 450 })
     for (const path of ['/', `/nft/${NFT}`, '/cart', '/login', '/register']) {
       await page.goto(path)
@@ -243,8 +243,8 @@ test.describe('acessibilidade @a11y', () => {
     }
   })
 
-  test('tablet 768: telas principais sem violações axe e sem overflow horizontal', async ({ page }) => {
-    test.skip(isMobile(page), 'roda uma vez, no projeto desktop')
+  // Define o próprio viewport: roda uma vez, no projeto desktop.
+  test('tablet 768: telas principais sem violações axe e sem overflow horizontal @desktop-only', async ({ page }) => {
     await page.setViewportSize({ width: 768, height: 1024 })
     await loginAs(page, ANA, `/nft/${NFT}`)
     await addToCart(page)

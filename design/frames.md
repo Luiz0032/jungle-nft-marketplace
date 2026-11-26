@@ -74,6 +74,7 @@ URL de um node: `https://www.figma.com/design/pJtZ1Ne6GsguDac7Yaij8V/?node-id=<i
 ## Referências visuais salvas
 
 - `design/screens/home-desktop.png` — export 1440×3668 da Home desktop (`2:2`), referência visual da Home.
+- `design/ref/{Desktop,Mobile}/<nome do frame>.png` — exports 1× de todos os frames da tabela acima (não versionado: `.git/info/exclude`). Usados na passada visual da Sessão 9.
 
 ## Assets baixados
 
@@ -81,4 +82,4 @@ Ver `public/assets/` — tabela com dimensões em `design/tokens.md#assets`.
 
 ## Pendências de design
 
-- Mobile não tem Confirmação, Perfil nem Carteiras: adaptar a partir do desktop com os mesmos tokens.
+- Mobile não tem Confirmação, Perfil nem Carteiras: adaptados a partir do desktop com os mesmos tokens (ver ARCHITECTURE §11).

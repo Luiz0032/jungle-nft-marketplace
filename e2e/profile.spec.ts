@@ -19,7 +19,7 @@ test.describe('perfil @profile', () => {
   test.beforeEach(async ({ page }) => {
     await bootMock(page)
     await loginAs(page, ANA, '/profile')
-    await expect(page.getByRole('heading', { level: 1, name: 'Meu perfil' })).toBeVisible()
+    await expect(page.getByRole('heading', { level: 1, name: 'Perfil do colecionador' })).toBeVisible()
   })
 
   test('dados: validação, e-mail em uso e sucesso refletido no header e após refresh', async ({ page }) => {
@@ -109,13 +109,13 @@ test.describe('perfil @profile', () => {
     await expect(live(page)).toContainText('Senha alterada')
     await expect(current).toHaveValue('')
 
-    await page.getByRole('button', { name: 'Sair' }).click()
+    await page.getByRole('button', { name: 'Sair', exact: true }).click()
     await expect(live(page)).toContainText('Você saiu da conta.') // logout terminou (inclui o redirect para /)
     await page.goto('/login')
     await submitLogin(page, ANA)
     await expect(page.getByRole('alert')).toBeVisible() // senha antiga recusada
     await submitLogin(page, { email: ANA.email, password: 'NovaSenha123' })
-    await expect(page.getByRole('button', { name: 'Sair' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Sair', exact: true })).toBeVisible()
   })
 })
 

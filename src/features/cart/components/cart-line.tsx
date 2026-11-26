@@ -29,9 +29,20 @@ export function CartLineRow({
     <li
       data-testid={`cart-line-${line.editionId}`}
       aria-labelledby={`${id}-title`}
-      className="flex gap-4 border-b border-border py-5 first:pt-0 lg:items-center lg:gap-6"
+      className={cn(
+        // Mobile (Figma 16:360): cartão com arte 100px à esquerda e quantidade à direita.
+        'grid grid-cols-[100px_1fr_auto] gap-x-3 overflow-hidden rounded-[10px] bg-surface',
+        // Desktop (Figma 70371:250): linha de tabela de 70px alinhada às colunas NFTs | Preço | Edições | Total.
+        'lg:min-h-[70px] lg:grid-cols-[86px_225px_138px_137px_1fr_56px] lg:items-center lg:gap-x-0 lg:rounded-none',
+      )}
     >
-      <Link to="/nft/$id" params={{ id: line.nftId }} tabIndex={-1} aria-hidden className="shrink-0">
+      <Link
+        to="/nft/$id"
+        params={{ id: line.nftId }}
+        tabIndex={-1}
+        aria-hidden
+        className="col-start-1 row-span-3 row-start-1 lg:row-span-1 lg:self-stretch"
+      >
         <img
           {...nftImageProps(line.image, '100px')}
           alt=""
@@ -39,54 +50,57 @@ export function CartLineRow({
           height={100}
           loading="lazy"
           decoding="async"
-          className={cn('size-20 rounded-[10px] bg-surface object-cover lg:size-[100px]', soldOut && 'opacity-60 grayscale')}
+          className={cn('size-[100px] bg-surface-dark object-cover lg:size-[70px]', soldOut && 'opacity-60 grayscale')}
         />
       </Link>
 
-      <div className="flex min-w-0 flex-1 flex-col gap-3 lg:flex-row lg:items-center lg:gap-6">
-        <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-          <h3 id={`${id}-title`} className="truncate text-base leading-5 text-foreground">
-            <Link to="/nft/$id" params={{ id: line.nftId }} className="rounded-sm outline-none hover:text-brand focus-visible:ring-2 focus-visible:ring-ring">
-              {line.title}
-            </Link>
-          </h3>
-          <p className="text-sm text-muted-foreground">{line.editionLabel}</p>
-          <p className="text-sm text-muted-foreground">
-            <span className="sr-only">Preço unitário: </span>
-            <span data-testid="unit-price" className="font-bold text-brand">
-              {formatEth(line.unitPrice)}
-            </span>
-            <span aria-hidden> / un.</span>
-          </p>
-          {warning && (
-            <p id={`${id}-warning`} className="text-sm text-coral" data-testid="line-warning">
-              {warning}
-            </p>
-          )}
-        </div>
-
-        <div className="flex items-center justify-between gap-4 lg:w-[300px] lg:justify-end lg:gap-6">
-          <LineQuantity
-            title={line.title}
-            value={line.quantity}
-            max={line.available}
-            describedBy={warning ? `${id}-warning` : undefined}
-            onChange={onQuantity}
-          />
-          <p className="min-w-[96px] text-right text-base font-bold text-foreground">
-            <span className="sr-only">Subtotal da linha: </span>
-            <span data-testid="line-total">{formatEth(mul(line.unitPrice, line.quantity))}</span>
-          </p>
-          <button
-            type="button"
-            onClick={onRemove}
-            aria-label={`Remover ${line.title} (${line.editionLabel}) do carrinho`}
-            className="grid size-9 shrink-0 place-items-center rounded-md text-muted-foreground outline-none hover:bg-accent hover:text-coral focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            <Trash2 className="size-[18px]" aria-hidden />
-          </button>
-        </div>
+      <div className="col-start-2 row-start-1 flex min-w-0 flex-col gap-0.5 pt-3 lg:pt-0">
+        <h3 id={`${id}-title`} className="line-clamp-2 text-base leading-5 font-bold text-foreground lg:truncate">
+          <Link to="/nft/$id" params={{ id: line.nftId }} className="rounded-sm outline-none hover:text-brand focus-visible:ring-2 focus-visible:ring-ring">
+            {line.title}
+          </Link>
+        </h3>
+        <p className="truncate text-sm text-subtle">{line.editionLabel}</p>
       </div>
+
+      <p className="col-start-2 row-start-2 text-xs text-subtle lg:col-start-3 lg:row-start-1 lg:text-base lg:font-bold lg:text-muted-foreground">
+        <span className="sr-only">Preço unitário: </span>
+        <span data-testid="unit-price">{formatEth(line.unitPrice)}</span>
+        <span aria-hidden className="lg:hidden">
+          {' '}
+          / un.
+        </span>
+      </p>
+
+      <div className="col-start-3 row-start-3 self-end pr-3 pb-3 lg:col-start-4 lg:row-start-1 lg:self-center lg:p-0">
+        <LineQuantity
+          title={line.title}
+          value={line.quantity}
+          max={line.available}
+          describedBy={warning ? `${id}-warning` : undefined}
+          onChange={onQuantity}
+        />
+      </div>
+
+      <p className="col-start-2 row-start-3 self-end pb-3 text-lg leading-6 font-bold text-brand lg:col-start-5 lg:row-start-1 lg:self-center lg:pb-0 lg:text-base">
+        <span className="sr-only">Subtotal da linha: </span>
+        <span data-testid="line-total">{formatEth(mul(line.unitPrice, line.quantity))}</span>
+      </p>
+
+      <button
+        type="button"
+        onClick={onRemove}
+        aria-label={`Remover ${line.title} (${line.editionLabel}) do carrinho`}
+        className="col-start-3 row-start-1 mt-2 mr-2 grid size-9 shrink-0 place-items-center justify-self-end rounded-md text-muted-foreground outline-none hover:bg-accent hover:text-coral focus-visible:ring-2 focus-visible:ring-ring lg:col-start-6 lg:m-0 lg:justify-self-center"
+      >
+        <Trash2 className="size-5" aria-hidden />
+      </button>
+
+      {warning && (
+        <p id={`${id}-warning`} className="col-span-full px-3 pb-3 text-sm text-coral lg:px-4 lg:pb-3" data-testid="line-warning">
+          {warning}
+        </p>
+      )}
     </li>
   )
 }
@@ -117,11 +131,12 @@ function LineQuantity({
     const next = Math.min(Math.max(n, 1), Math.max(max, 1))
     if (next !== value) onChange(next)
   }
+  // Figma: botões redondos de 24px — contorno claro no mobile, preenchidos com primary no desktop.
   const btn =
-    'grid size-[33px] place-items-center rounded-md text-foreground outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-40'
+    'grid size-6 place-items-center rounded-full border border-foreground/70 text-foreground outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:border-transparent disabled:bg-surface-raised disabled:text-subtle lg:border-0 lg:bg-primary lg:text-primary-foreground lg:hover:bg-primary/90 lg:disabled:bg-primary lg:disabled:text-primary-foreground lg:disabled:opacity-40'
 
   return (
-    <div className="flex h-[50px] w-[112px] items-center justify-between rounded-[10px] border border-border-soft px-1">
+    <div className="flex items-center gap-1.5">
       <button
         type="button"
         className={btn}
@@ -129,7 +144,7 @@ function LineQuantity({
         disabled={value <= 1}
         aria-label={`Diminuir quantidade de ${title}`}
       >
-        <Minus className="size-4" aria-hidden />
+        <Minus className="size-3.5" strokeWidth={3} aria-hidden />
       </button>
       <input
         inputMode="numeric"
@@ -144,7 +159,7 @@ function LineQuantity({
           if (e.key === 'Enter') commit()
           if (e.key === 'Escape') setDraft(null)
         }}
-        className="w-9 bg-transparent text-center text-lg font-bold text-foreground outline-none focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-ring"
+        className="w-8 bg-transparent text-center text-base text-foreground outline-none focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-ring"
       />
       <button
         type="button"
@@ -153,7 +168,7 @@ function LineQuantity({
         disabled={value >= max}
         aria-label={`Aumentar quantidade de ${title}`}
       >
-        <Plus className="size-4" aria-hidden />
+        <Plus className="size-3.5" strokeWidth={3} aria-hidden />
       </button>
     </div>
   )

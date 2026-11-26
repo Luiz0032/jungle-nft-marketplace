@@ -23,7 +23,7 @@ async function addFromDetail(page: Page, nftId = NFT) {
 
 async function openCart(page: Page) {
   await page.goto('/cart')
-  await expect(page.getByRole('heading', { name: /Seu carrinho/ })).toBeVisible()
+  await expect(page.getByRole('heading', { name: /Carrinho de NFTs/ })).toBeVisible()
 }
 
 test.describe('carrinho @cart', () => {
@@ -123,7 +123,7 @@ test.describe('carrinho @cart', () => {
   test('cupom: inválido, expirado, aplicar e remover', async ({ page }) => {
     await addFromDetail(page)
     await openCart(page)
-    const field = page.getByLabel('Cupom de desconto')
+    const field = page.getByLabel('Código promocional')
     const apply = page.getByRole('button', { name: 'Aplicar' })
     await expect(page.getByTestId('quote-total')).toBeVisible()
     const totalWithout = await page.getByTestId('quote-total').innerText()
@@ -168,11 +168,11 @@ test.describe('carrinho @cart', () => {
     await expect(qtyInput(page)).toHaveValue('1')
 
     // Logout: carrinho da Ana some; Bruno tem o próprio (vazio).
-    await page.getByRole('button', { name: 'Sair' }).click()
+    await page.getByRole('button', { name: 'Sair', exact: true }).click()
     await expect(page.getByText('Seu carrinho está vazio')).toBeVisible()
     await loginAs(page, BRUNO, '/cart')
     await expect(page.getByText('Seu carrinho está vazio')).toBeVisible()
-    await page.getByRole('button', { name: 'Sair' }).click()
+    await page.getByRole('button', { name: 'Sair', exact: true }).click()
     await loginAs(page, ANA, '/cart')
     await expect(qtyInput(page)).toHaveValue('1')
   })

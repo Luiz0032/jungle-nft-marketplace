@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { createFileRoute, Link, useCanGoBack, useNavigate, useRouter } from '@tanstack/react-router'
-import { ArrowLeft, Share2, ShoppingCart } from 'lucide-react'
+import { ChevronLeft, Share2, ShoppingCart } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useRealtime } from '@/app/realtime-context'
 import { NotFound } from '@/components/not-found'
@@ -96,7 +96,7 @@ function NftDetailView({ nft, refreshing }: { nft: NftDetail; refreshing: boolea
   return (
     <article aria-labelledby="nft-title" aria-busy={refreshing} className="flex flex-col gap-16 pt-2 lg:gap-24 lg:pt-8">
       <div className="flex flex-col gap-3">
-        <nav aria-label="Trilha" className="hidden text-sm text-muted-foreground lg:block">
+        <nav aria-label="Trilha" className="hidden text-sm font-bold text-foreground lg:block">
           <ol className="flex gap-1">
             <li>
               <Link to="/" className="rounded-sm hover:text-brand">
@@ -110,7 +110,7 @@ function NftDetailView({ nft, refreshing }: { nft: NftDetail; refreshing: boolea
               </Link>{' '}
               /
             </li>
-            <li aria-current="page" className="text-foreground">
+            <li aria-current="page" className="text-muted-foreground">
               {nft.title}
             </li>
           </ol>
@@ -124,17 +124,7 @@ function NftDetailView({ nft, refreshing }: { nft: NftDetail; refreshing: boolea
 
           <div className="flex min-w-0 flex-1 flex-col gap-5">
             <header className="flex flex-col gap-3 border-b border-border pb-3">
-              <p className="text-sm text-muted-foreground">
-                <Link
-                  to="/"
-                  search={{ collection: [nft.collection.slug] }}
-                  hash="catalogo"
-                  className="rounded-sm hover:text-brand"
-                >
-                  {nft.collection.name}
-                </Link>
-              </p>
-              <h1 id="nft-title" className="text-xl leading-tight font-bold text-foreground lg:text-[32px]">
+              <h1 id="nft-title" className="text-xl leading-tight font-bold text-foreground lg:text-[26px]">
                 {nft.title}
               </h1>
               <p className="text-lg leading-5 font-bold text-brand" aria-hidden="true">
@@ -176,7 +166,7 @@ function NftDetailView({ nft, refreshing }: { nft: NftDetail; refreshing: boolea
                   disabled={soldOut || addToCart.isPending}
                   aria-describedby={soldOut ? 'buy-unavailable' : undefined}
                   onClick={() => add(true)}
-                  className="flex h-[60px] flex-1 items-center justify-center rounded-[10px] bg-primary text-base font-bold text-primary-foreground outline-none hover:bg-primary/90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-60 lg:h-10 lg:w-[130px] lg:flex-none lg:rounded-md"
+                  className="flex h-[60px] flex-1 items-center justify-center rounded-full bg-linear-to-r from-primary to-[#b5743f] text-base font-bold text-primary-foreground outline-none hover:brightness-105 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-60 lg:h-10 lg:w-[130px] lg:flex-none lg:rounded-md lg:bg-primary lg:bg-none"
                 >
                   <span className="lg:hidden">Comprar NFT</span>
                   <span className="hidden lg:inline">COMPRAR</span>
@@ -187,7 +177,7 @@ function NftDetailView({ nft, refreshing }: { nft: NftDetail; refreshing: boolea
                   aria-label="Adicionar ao carrinho"
                   aria-describedby={soldOut ? 'buy-unavailable' : undefined}
                   onClick={() => add(false)}
-                  className="grid size-[60px] place-items-center rounded-[10px] border border-primary text-primary outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 lg:size-10 lg:rounded-md"
+                  className="grid size-[60px] place-items-center rounded-full border border-border-soft bg-surface-raised text-primary outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 lg:size-10 lg:rounded-md lg:border-primary lg:bg-transparent"
                 >
                   <ShoppingCart className="size-5" aria-hidden />
                 </button>
@@ -200,21 +190,30 @@ function NftDetailView({ nft, refreshing }: { nft: NftDetail; refreshing: boolea
               )}
             </div>
 
-            <dl className="flex flex-col gap-3 text-base leading-5 text-foreground">
+            <dl className="flex flex-col gap-3 text-sm leading-5 text-muted-foreground lg:text-[15px]">
               <div className="flex gap-2">
                 <dt>ID do token:</dt>
                 <dd>{tokenId}</dd>
               </div>
               <div className="flex gap-2">
                 <dt>Coleção:</dt>
-                <dd>{nft.collection.name}</dd>
+                <dd>
+                  <Link
+                    to="/"
+                    search={{ collection: [nft.collection.slug] }}
+                    hash="catalogo"
+                    className="rounded-sm underline-offset-2 outline-none hover:text-brand hover:underline focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    {nft.collection.name}
+                  </Link>
+                </dd>
               </div>
               <div className="flex gap-2">
                 <dt>Criador:</dt>
                 <dd>{nft.creator.name}</dd>
               </div>
             </dl>
-            <div className="flex items-center gap-3 text-base text-foreground">
+            <div className="flex items-center gap-3 text-sm font-bold text-foreground lg:text-[15px]">
               <span>Compartilhar este NFT:</span>
               <button
                 type="button"
@@ -260,12 +259,10 @@ function BackButton() {
     <button
       type="button"
       onClick={() => (canGoBack ? router.history.back() : void router.navigate({ to: '/' }))}
-      className="flex items-center gap-2 self-start rounded-md text-sm text-foreground outline-none hover:text-brand focus-visible:ring-2 focus-visible:ring-ring lg:hidden"
+      aria-label="Voltar"
+      className="grid size-9 place-items-center self-start rounded-full bg-surface-raised text-foreground outline-none hover:text-brand focus-visible:ring-2 focus-visible:ring-ring lg:hidden"
     >
-      <span className="grid size-[35px] place-items-center rounded-[10px] bg-surface">
-        <ArrowLeft className="size-5" aria-hidden />
-      </span>
-      Voltar
+      <ChevronLeft className="size-5" aria-hidden />
     </button>
   )
 }

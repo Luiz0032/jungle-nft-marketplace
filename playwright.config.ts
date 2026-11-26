@@ -20,10 +20,13 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium-desktop',
+      // Testes de um único layout: filtrados por projeto (relatório sem "skipped").
+      grepInvert: /@mobile-only/,
       use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } },
     },
     {
       name: 'chromium-mobile',
+      grepInvert: /@desktop-only/,
       use: { ...devices['Pixel 7'], viewport: { width: 390, height: 844 } },
     },
   ],

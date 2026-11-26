@@ -13,7 +13,7 @@ async function fillLogin(page: Page, user: { email: string; password: string }) 
 async function login(page: Page, user: { email: string; password: string }, redirect?: string) {
   await page.goto(redirect ? `/login?redirect=${encodeURIComponent(redirect)}` : '/login')
   await fillLogin(page, user)
-  await expect(page.getByRole('button', { name: 'Sair' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Sair', exact: true })).toBeVisible()
 }
 
 const socketUsers = (page: Page) =>
@@ -59,7 +59,7 @@ test.describe('auth @auth', () => {
     await email.fill('carla@jungle.test')
     await submit.click()
     await expect(page).toHaveURL('/')
-    await expect(page.getByRole('button', { name: 'Sair' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Sair', exact: true })).toBeVisible()
     await expect(page.locator('#live-region')).toHaveText(/Conta criada/)
     await page.goto('/profile')
     await expect(page.getByTestId('profile-email')).toHaveText('carla@jungle.test')
@@ -135,7 +135,7 @@ test.describe('auth @auth', () => {
       localStorage.setItem('jg:guest-cart', '[]') // público: sobrevive
     })
 
-    await page.getByRole('button', { name: 'Sair' }).click()
+    await page.getByRole('button', { name: 'Sair', exact: true }).click()
     await expect(page).toHaveURL('/')
     await expect(page.getByRole('link', { name: 'Entrar' }).first()).toBeVisible()
 
@@ -154,7 +154,7 @@ test.describe('auth @auth', () => {
     await login(page, ANA, '/profile')
     await expect(page.getByTestId('profile-email')).toHaveText(ANA.email)
 
-    await page.getByRole('button', { name: 'Sair' }).click()
+    await page.getByRole('button', { name: 'Sair', exact: true }).click()
     await expect(page).toHaveURL('/')
 
     // Captura qualquer render do perfil durante o login do Bruno.

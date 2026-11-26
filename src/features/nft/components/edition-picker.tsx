@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils'
 /** "Edição Padrão" → "Padrão" (pílulas curtas como as do Figma: 1/1, 1/10, ABERTA). */
 const shortLabel = (label: string) => label.replace(/^Edição\s+/i, '')
 
-/** Pílulas de edição — Figma "Frame 156" (70342:2695): altura 28, raio cheio, borda; selecionada em primary. */
+/** Pílulas de edição — Figma "Frame 156" (70342:2695): altura 28, raio cheio, borda; selecionada com contorno primary. */
 export function EditionPicker({
   editions,
   selectedId,
@@ -33,8 +33,8 @@ export function EditionPicker({
               aria-checked={checked}
               onClick={() => onSelect(e.id)}
               className={cn(
-                'h-7 rounded-full border px-3 text-sm leading-4 outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                checked ? 'border-primary bg-primary font-bold text-primary-foreground' : 'border-border-soft text-foreground hover:border-primary',
+                'h-7 rounded-full border px-3 text-xs leading-4 uppercase outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                checked ? 'border-primary bg-surface-dark font-bold text-foreground' : 'border-border-soft text-muted-foreground hover:border-primary',
                 e.available === 0 && !checked && 'text-subtle line-through decoration-1',
               )}
             >
@@ -49,22 +49,23 @@ export function EditionPicker({
 }
 
 /**
- * Quantidade — Figma "Frame 160" (103×50): − 1 +. Sempre inteira, entre 1 e o estoque da edição.
+ * Quantidade — Figma "Frame 160": botões redondos primary com − e +, número no meio. Sempre inteira, entre 1 e o
+ * estoque da edição.
  * Com estoque 0 fica desabilitada.
  */
 export function QuantityStepper({ value, max, onChange }: { value: number; max: number; onChange: (n: number) => void }) {
   const id = useId()
   const disabled = max < 1
   const btn =
-    'grid size-[33px] place-items-center rounded-md text-foreground outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-40'
+    'grid h-8 w-7 place-items-center rounded-full bg-primary text-primary-foreground outline-none hover:bg-primary/90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-40'
   return (
     <div className="flex items-center gap-3">
       <label htmlFor={id} className="text-base text-foreground lg:sr-only">
         Qtd.
       </label>
-      <div className="flex h-[50px] items-center rounded-[10px] border border-border-soft px-1 lg:w-[103px] lg:justify-between">
+      <div className="flex items-center gap-2">
         <button type="button" className={btn} onClick={() => onChange(value - 1)} disabled={disabled || value <= 1} aria-label="Diminuir quantidade">
-          <Minus className="size-4" aria-hidden />
+          <Minus className="size-4" strokeWidth={3} aria-hidden />
         </button>
         <input
           id={id}
@@ -81,7 +82,7 @@ export function QuantityStepper({ value, max, onChange }: { value: number; max: 
           className="w-8 bg-transparent text-center text-lg font-bold text-foreground outline-none focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-ring disabled:text-subtle"
         />
         <button type="button" className={btn} onClick={() => onChange(value + 1)} disabled={disabled || value >= max} aria-label="Aumentar quantidade">
-          <Plus className="size-4" aria-hidden />
+          <Plus className="size-4" strokeWidth={3} aria-hidden />
         </button>
       </div>
       <span id={`${id}-hint`} className="sr-only">

@@ -71,7 +71,7 @@ test.describe('favoritos @favorites', () => {
     await expect(heart(page)).toHaveAttribute('aria-pressed', 'true')
     await expect(page.locator('#live-region')).toContainText('adicionado aos favoritos')
 
-    await page.getByRole('button', { name: 'Sair' }).click()
+    await page.getByRole('button', { name: 'Sair', exact: true }).click()
     await expect(page.getByRole('link', { name: 'Entrar' }).first()).toBeVisible()
     await expect(heart(page)).toHaveAttribute('aria-pressed', 'false')
 
@@ -80,7 +80,7 @@ test.describe('favoritos @favorites', () => {
     // Favorito do seed da Ana também não aparece para o Bruno (e aparece para ela).
     await page.goto('/nft/nft-001')
     await expect(heart(page)).toHaveAttribute('aria-pressed', 'false')
-    await page.getByRole('button', { name: 'Sair' }).click()
+    await page.getByRole('button', { name: 'Sair', exact: true }).click()
     await loginAs(page, ANA, '/nft/nft-001')
     await expect(heart(page)).toHaveAttribute('aria-pressed', 'true')
   })

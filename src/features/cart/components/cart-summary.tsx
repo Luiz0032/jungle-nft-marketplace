@@ -39,10 +39,11 @@ export function CartSummary({ cart, blocked }: { cart: CartView; blocked: boolea
     <section
       aria-labelledby="summary-title"
       aria-busy={updating}
-      className="flex flex-col gap-6 rounded-[10px] bg-surface p-6 lg:sticky lg:top-6"
+      // Mobile (Figma 70397:245): folha inferior arredondada. Desktop: coluna sem cartão, título com divisória.
+      className="flex flex-col gap-5 rounded-t-[24px] bg-surface px-6 pt-6 pb-8 lg:sticky lg:top-6 lg:rounded-none lg:bg-transparent lg:p-0"
     >
-      <h2 id="summary-title" className="text-lg leading-6 font-bold text-foreground">
-        Resumo do pedido
+      <h2 id="summary-title" className="sr-only lg:not-sr-only lg:border-b lg:border-border lg:pb-3 lg:text-lg lg:leading-5 lg:font-bold lg:text-foreground">
+        Resumo da carteira
       </h2>
 
       <CouponForm scope={cart.scope} items={items} applied={coupon} disabled={items.length === 0} />
@@ -69,7 +70,7 @@ export function CartSummary({ cart, blocked }: { cart: CartView; blocked: boolea
           )}
         </div>
       ) : data ? (
-        <dl className="flex flex-col gap-3 text-sm text-muted-foreground" data-testid="quote-summary">
+        <dl className="flex flex-col gap-3 text-base text-foreground" data-testid="quote-summary">
           <Row label="Subtotal" value={formatEth(data.subtotal)} testId="quote-subtotal" />
           {!isZero(data.discount) && (
             <Row
@@ -79,8 +80,8 @@ export function CartSummary({ cart, blocked }: { cart: CartView; blocked: boolea
               className="text-success"
             />
           )}
-          <Row label="Taxa de rede" value={formatEth(data.networkFee)} testId="quote-fee" />
-          <div className="flex items-baseline justify-between border-t border-border pt-4 text-foreground">
+          <Row label="Taxa de rede" value={formatEth(data.networkFee)} testId="quote-fee" note="Taxa estimada" />
+          <div className="flex items-baseline justify-between pt-2 text-foreground">
             <dt className="text-base font-bold">Total</dt>
             <dd className="text-lg font-bold text-brand" data-testid="quote-total">
               {formatEth(data.total)}
@@ -89,7 +90,7 @@ export function CartSummary({ cart, blocked }: { cart: CartView; blocked: boolea
         </dl>
       ) : null}
 
-      <p className="min-h-5 text-xs text-subtle" aria-hidden={!updating}>
+      <p className={updating && !quote.isPending ? "-my-2 text-xs text-subtle" : "sr-only"} aria-hidden={!updating}>
         {updating && !quote.isPending ? 'Atualizando valores…' : ''}
       </p>
 
@@ -97,9 +98,9 @@ export function CartSummary({ cart, blocked }: { cart: CartView; blocked: boolea
         canCheckout ? (
           <Link
             to="/checkout"
-            className="grid h-[50px] w-full place-items-center rounded-md bg-primary text-base font-bold text-primary-foreground outline-none hover:bg-primary/90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            className={cta}
           >
-            Finalizar compra
+            Conectar e finalizar
           </Link>
         ) : (
           <>
@@ -107,11 +108,11 @@ export function CartSummary({ cart, blocked }: { cart: CartView; blocked: boolea
               type="button"
               disabled
               aria-describedby="checkout-blocked"
-              className="h-[50px] w-full cursor-not-allowed rounded-md bg-primary text-base font-bold text-primary-foreground opacity-60"
+              className={`${cta} cursor-not-allowed opacity-60`}
             >
-              Finalizar compra
+              Conectar e finalizar
             </button>
-            <p id="checkout-blocked" className="-mt-4 text-xs text-subtle">
+            <p id="checkout-blocked" className="-mt-3 text-xs text-subtle">
               {updating ? 'Atualizando valores…' : 'Resolva os avisos do carrinho para continuar.'}
             </p>
           </>
@@ -120,22 +121,34 @@ export function CartSummary({ cart, blocked }: { cart: CartView; blocked: boolea
         <Link
           to="/login"
           search={{ redirect: '/cart' }}
-          className="grid h-[50px] w-full place-items-center rounded-md bg-primary text-base font-bold text-primary-foreground outline-none hover:bg-primary/90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          className={cta}
         >
           Entrar para finalizar
         </Link>
       )}
+      <Link
+        to="/"
+        hash="catalogo"
+        className="-mt-1 self-center rounded-sm text-base text-brand outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
+      >
+        Continuar explorando
+      </Link>
     </section>
   )
 }
 
-function Row({ label, value, testId, className }: { label: string; value: string; testId: string; className?: string }) {
+/** Figma: pílula com degradê de 60px no mobile; retângulo primary de 40px no desktop. */
+const cta =
+  'grid h-[60px] w-full place-items-center rounded-full bg-linear-to-r from-primary to-[#b5743f] text-base font-bold text-primary-foreground outline-none hover:brightness-105 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background lg:h-10 lg:rounded-none lg:bg-primary lg:bg-none'
+
+function Row({ label, value, testId, className, note }: { label: string; value: string; testId: string; className?: string; note?: string }) {
   return (
-    <div className={`flex items-baseline justify-between gap-4 ${className ?? ''}`}>
+    <div className={`flex flex-wrap items-baseline justify-between gap-x-4 ${className ?? ''}`}>
       <dt>{label}</dt>
-      <dd className="font-bold" data-testid={testId}>
+      <dd className="text-right text-base lg:text-lg" data-testid={testId}>
         {value}
       </dd>
+      {note && <dd className="w-full mt-1 text-right text-xs text-brand">{note}</dd>}
     </div>
   )
 }
@@ -205,10 +218,11 @@ function CouponForm({
 
   return (
     <form onSubmit={(e) => void submit(e)} noValidate className="flex flex-col gap-2">
-      <label htmlFor={id} className="text-sm text-foreground">
-        Cupom de desconto
+      <label htmlFor={id} className="sr-only lg:not-sr-only lg:text-sm lg:font-bold lg:text-foreground">
+        Código promocional
       </label>
-      <div className="flex gap-2">
+      {/* Figma: campo e botão acoplados — pílula no mobile, retângulo com borda primary no desktop. */}
+      <div className="flex h-[50px] overflow-hidden rounded-full border border-border-soft bg-surface-dark focus-within:ring-2 focus-within:ring-ring lg:h-10 lg:rounded-none lg:border-primary lg:bg-transparent">
         <input
           id={id}
           value={code}
@@ -218,16 +232,16 @@ function CouponForm({
           }}
           maxLength={32}
           autoComplete="off"
-          placeholder="Ex.: JUNGLE10"
+          placeholder="Digite o código promocional..."
           aria-invalid={error ? true : undefined}
           aria-describedby={error ? `${id}-error` : undefined}
           disabled={disabled}
-          className="h-10 min-w-0 flex-1 rounded-md border border-border-soft bg-surface-dark px-3 text-sm text-foreground uppercase outline-none placeholder:text-subtle placeholder:normal-case focus-visible:ring-2 focus-visible:ring-ring aria-invalid:border-coral"
+          className="h-full min-w-0 flex-1 bg-transparent px-4 text-sm text-foreground uppercase outline-none placeholder:text-xs placeholder:text-subtle placeholder:normal-case aria-invalid:text-coral lg:px-2"
         />
         <button
           type="submit"
           disabled={disabled || busy}
-          className="h-10 shrink-0 rounded-md border border-primary px-4 text-sm font-bold text-brand outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
+          className="m-1 shrink-0 rounded-full bg-linear-to-r from-primary to-[#b5743f] px-4 text-base font-bold text-primary-foreground outline-none hover:brightness-105 disabled:opacity-60 lg:m-0 lg:w-[102px] lg:rounded-none lg:bg-primary lg:bg-none"
         >
           {busy ? 'Aplicando…' : 'Aplicar'}
         </button>

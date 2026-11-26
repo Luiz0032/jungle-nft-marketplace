@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { ShoppingCart } from 'lucide-react'
+import { Breadcrumb, MobileTitle } from '@/components/breadcrumb'
 import { Button } from '@/components/ui/button'
 import { CartLineRow } from '@/features/cart/components/cart-line'
 import { CartSummary } from '@/features/cart/components/cart-summary'
@@ -22,28 +23,17 @@ function CartPage() {
 
   return (
     <div className="flex flex-col gap-16 pt-2 pb-8 lg:gap-24 lg:pt-8">
-      <div className="flex flex-col gap-6">
-        <nav aria-label="Trilha" className="hidden text-sm text-muted-foreground lg:block">
-          <ol className="flex gap-1">
-            <li>
-              <Link to="/" className="rounded-sm hover:text-brand">
-                Início
-              </Link>{' '}
-              /
-            </li>
-            <li aria-current="page" className="text-foreground">
-              Carrinho
-            </li>
-          </ol>
-        </nav>
-        <h1 className="text-[22px] leading-[29px] text-foreground lg:text-heading lg:font-bold">
-          Seu carrinho
+      <div className="flex flex-col gap-6 lg:gap-3">
+        <Breadcrumb items={[{ label: 'Início', link: { to: '/' } }, { label: 'Mercado', link: { to: '/', hash: 'catalogo' } }, { label: 'Carrinho' }]} />
+        <MobileTitle back={{ to: '/', hash: 'catalogo' }} backLabel="Voltar ao mercado">
+          Carrinho de NFTs
           {cart.status === 'success' && cart.count > 0 && (
-            <span className="ml-2 text-base font-normal text-muted-foreground">
+            <span className="sr-only">
+              {' '}
               ({cart.count} {cart.count === 1 ? 'item' : 'itens'})
             </span>
           )}
-        </h1>
+        </MobileTitle>
 
         {cart.mergeFailed && (
           <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-coral/50 p-4 text-sm">
@@ -65,12 +55,21 @@ function CartPage() {
         ) : cart.lines.length === 0 ? (
           <EmptyCart />
         ) : (
-          <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:gap-12">
-            <section aria-labelledby="items-title" aria-busy={cart.isFetching} className="min-w-0 flex-1">
+          <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between lg:gap-12">
+            <section aria-labelledby="items-title" aria-busy={cart.isFetching} className="min-w-0 flex-1 lg:max-w-[782px]">
               <h2 id="items-title" className="sr-only">
                 Itens
               </h2>
-              <ul className="flex flex-col">
+              <div
+                aria-hidden
+                className="mb-3 hidden grid-cols-[311px_138px_137px_1fr] border-b border-border pb-3 text-base leading-5 font-bold text-foreground lg:grid"
+              >
+                <span>NFTs</span>
+                <span>Preço</span>
+                <span>Edições</span>
+                <span>Total</span>
+              </div>
+              <ul className="flex flex-col gap-4 lg:gap-3">
                 {cart.lines.map((line) => (
                   <CartLineRow
                     key={line.key}
@@ -81,7 +80,7 @@ function CartPage() {
                 ))}
               </ul>
             </section>
-            <div className="lg:w-[380px] lg:shrink-0">
+            <div className="-mx-4 lg:mx-0 lg:w-[332px] lg:shrink-0">
               <CartSummary cart={cart} blocked={cart.lines.some((l) => l.quantity > l.available)} />
             </div>
           </div>
@@ -125,12 +124,12 @@ function CartSkeleton() {
           </div>
         ))}
       </div>
-      <div className="shimmer h-[360px] rounded-[10px] lg:w-[380px]" />
+      <div className="shimmer h-[360px] rounded-[10px] lg:w-[332px]" />
     </div>
   )
 }
 
-/** "Você também pode gostar" — Figma "Related Products" (70371:239). */
+/** "Colecionadores também viram" — Figma "Related Products" (70371:239). */
 function Related({ excludeIds }: { excludeIds: string[] }) {
   const query = useQuery(nftListQuery({ collection: [], category: [], sort: 'popular', page: 1, pageSize: 10 }))
   const items = query.data?.items.filter((i) => !excludeIds.includes(i.id)).slice(0, 5)
@@ -139,8 +138,8 @@ function Related({ excludeIds }: { excludeIds: string[] }) {
   return (
     <section aria-labelledby="related-title" className="flex flex-col gap-8">
       <div className="border-b border-border pb-3">
-        <h2 id="related-title" className="text-base leading-4 font-bold text-foreground">
-          Você também pode gostar
+        <h2 id="related-title" className="text-lg leading-6 font-bold text-brand">
+          Colecionadores também viram
         </h2>
       </div>
       <div className="-mx-4 overflow-x-auto px-4 lg:mx-0 lg:px-0">

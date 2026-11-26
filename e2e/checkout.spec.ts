@@ -16,7 +16,7 @@ async function addToCart(page: Page, nftId = NFT) {
 
 async function openCheckout(page: Page) {
   await page.goto('/cart')
-  await page.getByRole('link', { name: 'Finalizar compra' }).click()
+  await page.getByRole('link', { name: 'Conectar e finalizar' }).click()
   await expect(page.getByRole('heading', { name: 'Pagamento', level: 1 })).toBeVisible()
 }
 
