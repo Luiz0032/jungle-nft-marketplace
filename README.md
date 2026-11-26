@@ -4,7 +4,7 @@ Front-end de um marketplace de NFTs: catálogo com busca, filtros e paginação,
 
 Não há backend real. REST e Socket.IO são atendidos por um servidor mock (MSW) que roda no navegador, na camada de rede. A app não sabe que fala com um mock, e o mesmo build serve para desenvolvimento, testes e a demo pública.
 
-**Demo pública:** https://jungle-nft-marketplace.vercel.app
+**Demo pública:** https://jungle-nft-marketplace-gamma.vercel.app
 
 Stack: React 19 + TypeScript (strict) · Vite · TanStack Router · TanStack Query · Axios · Socket.IO · Tailwind CSS v4 · shadcn/ui · MSW 2 + `@mswjs/socket.io-binding` · Playwright · Lighthouse CI.
 
