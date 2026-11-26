@@ -1,0 +1,121 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * Tokens de design.
+ * TODO(design/tokens.md): o arquivo ainda não existe.
+ * Os valores abaixo são PROVISÓRIOS; substituir pelos hex/fonte/raios do Figma.
+ * Fonte única de verdade: as variáveis --jg-* abaixo; o shadcn consome via @theme inline.
+ */
+:root {
+  /* marca */
+  --jg-brand: #7c3aed;
+  --jg-brand-foreground: #ffffff;
+  --jg-accent: #22c55e;
+
+  /* superfícies */
+  --jg-bg: #0b0b0f;
+  --jg-surface: #15151c;
+  --jg-surface-2: #1e1e28;
+  --jg-border: #2a2a36;
+
+  /* texto */
+  --jg-text: #f4f4f6;
+  --jg-text-muted: #a1a1b0;
+
+  /* feedback */
+  --jg-success: #22c55e;
+  --jg-warning: #f59e0b;
+  --jg-danger: #ef4444;
+
+  --radius: 0.75rem;
+
+  /* mapeamento shadcn */
+  --background: var(--jg-bg);
+  --foreground: var(--jg-text);
+  --card: var(--jg-surface);
+  --card-foreground: var(--jg-text);
+  --popover: var(--jg-surface-2);
+  --popover-foreground: var(--jg-text);
+  --primary: var(--jg-brand);
+  --primary-foreground: var(--jg-brand-foreground);
+  --secondary: var(--jg-surface-2);
+  --secondary-foreground: var(--jg-text);
+  --muted: var(--jg-surface-2);
+  --muted-foreground: var(--jg-text-muted);
+  --accent: var(--jg-surface-2);
+  --accent-foreground: var(--jg-text);
+  --destructive: var(--jg-danger);
+  --border: var(--jg-border);
+  --input: var(--jg-border);
+  --ring: var(--jg-brand);
+}
+
+@theme {
+  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Inter', ui-sans-serif, system-ui, sans-serif;
+
+  --breakpoint-sm: 40rem;
+  --breakpoint-md: 48rem;
+  --breakpoint-lg: 64rem;
+  --breakpoint-xl: 90rem;
+}
+
+@theme inline {
+  --color-brand: var(--jg-brand);
+  --color-brand-foreground: var(--jg-brand-foreground);
+  --color-surface: var(--jg-surface);
+  --color-surface-2: var(--jg-surface-2);
+  --color-success: var(--jg-success);
+  --color-warning: var(--jg-warning);
+  --color-danger: var(--jg-danger);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    color-scheme: dark;
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
