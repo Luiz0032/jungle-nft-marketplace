@@ -220,7 +220,8 @@ function PriceRange({
   return (
     <fieldset className="flex flex-col gap-4">
       <legend className="mb-3 text-lg leading-4 font-bold text-foreground">Faixa de preço</legend>
-      <div className="relative mx-1 h-5">
+      {/* 24px de altura (alvo mínimo, WCAG 2.5.8) sem mudar o layout: a margem negativa compensa os 4px. */}
+      <div className="relative mx-1 -my-0.5 h-6">
         <span aria-hidden="true" className="absolute inset-x-0 top-1/2 h-[3px] -translate-y-1/2 rounded-full bg-primary" />
         <input
           type="range"

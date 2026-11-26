@@ -46,7 +46,7 @@ test.describe('carga lenta e falhas @slow', () => {
     const loading = page.getByRole('status', { name: 'Carregando NFT' })
     await expect(loading).toBeVisible()
     await expect(loading).toHaveAttribute('aria-busy', 'true')
-    await expect(loading.locator('.shimmer').first()).toBeVisible()
+    await expect(loading.locator('.shimmer').filter({ visible: true }).first()).toBeVisible()
 
     await advanceUntilVisible(page, page.getByRole('heading', { level: 1 }))
     await expect(loading).toHaveCount(0)

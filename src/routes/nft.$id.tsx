@@ -16,6 +16,7 @@ import { nftDetailQuery } from '@/features/nft/queries'
 import { isApiError } from '@/lib/http'
 import { formatEth } from '@/lib/money'
 import { notify } from '@/lib/notify'
+import { usePageMeta } from '@/lib/page-meta'
 
 /** Detalhe do NFT — Figma desktop 10:244 / mobile 15:5536. Preço/estoque ao vivo via `nft.updated`. */
 export const Route = createFileRoute('/nft/$id')({
@@ -28,6 +29,7 @@ export const Route = createFileRoute('/nft/$id')({
 function NftPage() {
   const { id } = Route.useParams()
   const query = useQuery(nftDetailQuery(id))
+  usePageMeta(query.data?.title ?? 'NFT', query.data ? `${query.data.title} — ${query.data.collection.name}. ${query.data.description}` : 'Detalhes, edições, preço e estoque do NFT.')
 
   if (query.isPending) return <DetailSkeleton />
   if (query.isError) {
@@ -293,18 +295,46 @@ function Related({ nft }: { nft: NftDetail }) {
   )
 }
 
+/** Espelha o layout final (trilha, galeria, "Mais desta coleção") para o footer não pular quando o dado chega (CLS). */
 function DetailSkeleton() {
   return (
-    <div className="flex flex-col gap-8 py-8 lg:flex-row" role="status" aria-busy="true" aria-label="Carregando NFT">
-      <div className="shimmer aspect-square w-full rounded-[20px] lg:size-[444px] lg:shrink-0 lg:ml-32" />
-      <div className="flex flex-1 flex-col gap-4">
-        <div className="shimmer h-4 w-32 rounded-sm" />
-        <div className="shimmer h-9 w-3/4 rounded-sm" />
-        <div className="shimmer h-5 w-24 rounded-sm" />
-        <div className="shimmer h-20 w-full rounded-sm" />
-        <div className="shimmer h-7 w-56 rounded-full" />
-        <div className="shimmer h-[50px] w-full rounded-[10px]" />
+    <div className="flex flex-col gap-16 pt-2 lg:gap-24 lg:pt-8" role="status" aria-busy="true" aria-label="Carregando NFT">
+      <div className="flex flex-col gap-3">
+        <div className="shimmer hidden h-5 w-56 rounded-sm lg:block" />
+        <div className="shimmer size-9 rounded-full lg:hidden" />
+        <div className="flex flex-col gap-8 lg:flex-row">
+          <div className="flex shrink-0 flex-col-reverse gap-4 lg:w-[573px] lg:flex-row lg:gap-7">
+            <div className="flex gap-3 lg:flex-col lg:gap-4">
+              {Array.from({ length: 3 }, (_, i) => (
+                <div key={i} className="shimmer size-16 rounded-[10px] lg:size-[100px]" />
+              ))}
+            </div>
+            <div className="shimmer aspect-square w-full rounded-[20px] lg:size-[444px]" />
+          </div>
+          <DetailSkeletonInfo />
+        </div>
       </div>
+      <div className="flex flex-col gap-8" aria-hidden="true">
+        <div className="shimmer h-4 w-44 rounded-sm" />
+        <div className="grid grid-flow-col auto-cols-[160px] gap-4 overflow-hidden lg:grid-flow-row lg:grid-cols-5 lg:gap-6">
+          {Array.from({ length: 5 }, (_, i) => (
+            <NftCardSkeleton key={i} />
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function DetailSkeletonInfo() {
+  return (
+    <div className="flex min-w-0 flex-1 flex-col gap-4">
+      <div className="shimmer h-8 w-3/4 rounded-sm" />
+      <div className="shimmer h-5 w-40 rounded-sm" />
+      <div className="shimmer h-20 w-full rounded-sm" />
+      <div className="shimmer h-10 w-64 rounded-full" />
+      <div className="shimmer h-10 w-40 rounded-full" />
+      <div className="shimmer h-[50px] w-full rounded-[10px]" />
     </div>
   )
 }

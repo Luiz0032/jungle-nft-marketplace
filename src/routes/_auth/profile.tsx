@@ -22,6 +22,7 @@ import { UserAvatar } from '@/features/profile/components/user-avatar'
 import { profileQuery, useChangePassword, useUpdateProfile, useUploadAvatar } from '@/features/profile/queries'
 import { ApiRequestError } from '@/lib/http'
 import { notify } from '@/lib/notify'
+import { usePageMeta } from '@/lib/page-meta'
 
 /**
  * Perfil do colecionador — Figma desktop 9:1238 (sem frame mobile): sidebar "Meu perfil" + formulário em duas
@@ -35,6 +36,7 @@ const block = 'flex flex-col gap-5'
 const blockTitle = 'text-base leading-5 font-bold text-foreground'
 
 function ProfilePage() {
+  usePageMeta('Meu perfil', 'Edite seus dados, foto e senha da conta Kurio.')
   const { session } = Route.useRouteContext()
   const userId = session.user.id
   const profile = useQuery(profileQuery(userId))

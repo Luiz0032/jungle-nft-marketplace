@@ -22,6 +22,7 @@ import { isApiError } from '@/lib/http'
 import { useAttempt } from '@/lib/idempotency'
 import { formatEth } from '@/lib/money'
 import { cn } from '@/lib/utils'
+import { usePageMeta } from '@/lib/page-meta'
 
 /** Pagamento — Figma desktop 11:2862 (Checkout Page 70522:3321) / mobile 16:748. */
 export const Route = createFileRoute('/_auth/checkout')({
@@ -29,6 +30,7 @@ export const Route = createFileRoute('/_auth/checkout')({
 })
 
 function CheckoutPage() {
+  usePageMeta('Pagamento', 'Escolha a rede e a carteira, revise a cotação e confirme a compra dos seus NFTs.')
   const user = useCurrentUser()
   if (!user) return null // o layout `_auth` já está levando ao login
   return <Checkout key={user.id} user={user} />

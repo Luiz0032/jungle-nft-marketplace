@@ -6,6 +6,7 @@ import { FilterSheet } from '@/features/catalog/components/filter-sheet'
 import { FeaturedNft, HomeHero, Journal, Promos } from '@/features/catalog/components/home-sections'
 import { facetsQuery, nftListQuery } from '@/features/catalog/queries'
 import { CatalogSearchSchema, toListQuery, withFilters, type CatalogSearch } from '@/features/catalog/search'
+import { usePageMeta } from '@/lib/page-meta'
 
 /**
  * Home — Figma desktop 2:2 / mobile 14:5226. Busca, filtros, recorte, ordem e página vivem na URL
@@ -23,6 +24,7 @@ export const Route = createFileRoute('/')({
 })
 
 function HomePage() {
+  usePageMeta(undefined, 'Explore, filtre e compre edições de NFTs de coleções digitais, com preço e estoque atualizados em tempo real.')
   const search = Route.useSearch()
   const navigate = Route.useNavigate()
 

@@ -12,6 +12,7 @@ import { applyServerError } from '@/features/auth/components/form-errors'
 import { AccountShell } from '@/features/profile/components/account-shell'
 import { NETWORK_LABEL, shortAddress, useCreateWallet, useUpdateWallet, walletsQuery } from '@/features/wallets/queries'
 import { notify } from '@/lib/notify'
+import { usePageMeta } from '@/lib/page-meta'
 
 /**
  * Carteiras — Figma desktop 9:1670 (sem frame mobile): sidebar "Meu perfil", lista e formulário em duas colunas,
@@ -25,6 +26,7 @@ const block = 'flex flex-col gap-5'
 const blockTitle = 'text-base leading-5 font-bold text-foreground'
 
 function WalletsPage() {
+  usePageMeta('Carteiras', 'Gerencie as carteiras usadas para receber seus NFTs.')
   const { session } = Route.useRouteContext()
   const userId = session.user.id
   const wallets = useQuery(walletsQuery(userId))

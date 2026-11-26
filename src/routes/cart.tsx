@@ -10,6 +10,7 @@ import { useLiveCartNotice } from '@/features/cart/hooks'
 import { useCart, useCartMutations } from '@/features/cart/queries'
 import { NftCard, NftCardSkeleton } from '@/features/catalog/components/nft-card'
 import { nftListQuery } from '@/features/catalog/queries'
+import { usePageMeta } from '@/lib/page-meta'
 
 /** Carrinho — Figma desktop 11:1278 (Top 70371:250 + Related 70371:239) / mobile 16:360. */
 export const Route = createFileRoute('/cart')({
@@ -17,6 +18,7 @@ export const Route = createFileRoute('/cart')({
 })
 
 function CartPage() {
+  usePageMeta('Carrinho', 'Revise os NFTs do carrinho, ajuste quantidades e aplique um cupom antes de finalizar.')
   const cart = useCart()
   const { update, remove } = useCartMutations()
   useLiveCartNotice(cart.lines)

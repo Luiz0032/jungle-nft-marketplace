@@ -15,6 +15,7 @@ import { attempts } from '@/lib/idempotency'
 import { notify } from '@/lib/notify'
 import { queryKeys } from '@/lib/query-keys'
 import { useSocketConnected } from '@/lib/use-socket-status'
+import { usePageMeta } from '@/lib/page-meta'
 
 /**
  * Confirmação do pedido — Figma desktop 11:4385 (modal 70376:239, 578 px, sobre o checkout); sem mobile no Figma.
@@ -25,6 +26,7 @@ export const Route = createFileRoute('/_auth/orders/$id')({
 })
 
 function OrderPage() {
+  usePageMeta('Pedido', 'Acompanhe o status do seu pedido de NFTs até a confirmação.')
   const user = useCurrentUser()
   const { id } = Route.useParams()
   if (!user) return null

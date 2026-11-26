@@ -1,0 +1,82 @@
+{
+  "environment": {
+    "date": "2026-11-26T22:40:37.244Z",
+    "node": "v24.21.0",
+    "lighthouse": "13.6.0",
+    "chrome": "158.0.8127.88",
+    "benchmarkIndex": 2776,
+    "os": "Windows_NT 10.0.26300 x64",
+    "cpu": "AMD Ryzen 7 5700X 8-Core Processor (16 threads)",
+    "memoryGb": 32
+  },
+  "rows": [
+    {
+      "profile": "mobile",
+      "page": "/",
+      "perfRuns": [
+        82,
+        82,
+        82
+      ],
+      "performance": 82,
+      "accessibility": 100,
+      "best-practices": 100,
+      "seo": 100,
+      "lcpMs": 4743,
+      "cls": 0,
+      "tbtMs": 125,
+      "fcpMs": 799
+    },
+    {
+      "profile": "mobile",
+      "page": "/nft/nft-001",
+      "perfRuns": [
+        83,
+        66,
+        63
+      ],
+      "performance": 66,
+      "accessibility": 100,
+      "best-practices": 100,
+      "seo": 100,
+      "lcpMs": 4679,
+      "cls": 0,
+      "tbtMs": 689,
+      "fcpMs": 769
+    },
+    {
+      "profile": "desktop",
+      "page": "/",
+      "perfRuns": [
+        98,
+        98,
+        98
+      ],
+      "performance": 98,
+      "accessibility": 100,
+      "best-practices": 100,
+      "seo": 100,
+      "lcpMs": 1166,
+      "cls": 0,
+      "tbtMs": 0,
+      "fcpMs": 379
+    },
+    {
+      "profile": "desktop",
+      "page": "/nft/nft-001",
+      "perfRuns": [
+        99,
+        99,
+        99
+      ],
+      "performance": 99,
+      "accessibility": 100,
+      "best-practices": 100,
+      "seo": 100,
+      "lcpMs": 1031,
+      "cls": 0,
+      "tbtMs": 0,
+      "fcpMs": 342
+    }
+  ]
+}

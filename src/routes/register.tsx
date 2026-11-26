@@ -5,6 +5,7 @@ import { RegisterForm } from '@/features/auth/components/register-form'
 import { AuthSearchSchema, safeRedirect } from '@/features/auth/redirect'
 import { firstName } from '@/features/auth/session'
 import { notify } from '@/lib/notify'
+import { usePageMeta } from '@/lib/page-meta'
 
 export const Route = createFileRoute('/register')({
   validateSearch: AuthSearchSchema,
@@ -15,6 +16,7 @@ export const Route = createFileRoute('/register')({
 })
 
 function RegisterPage() {
+  usePageMeta('Criar conta', 'Crie sua conta Kurio para favoritar, comprar e acompanhar pedidos de NFTs.')
   const search = Route.useSearch()
   const navigate = useNavigate()
 

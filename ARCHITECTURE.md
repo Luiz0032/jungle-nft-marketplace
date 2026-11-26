@@ -1,6 +1,5 @@
 # ARCHITECTURE.md
 
-> Documento vivo. Seções marcadas com `TODO` ainda não foram detalhadas.
 > Contratos aqui são a especificação; o código em `src/contracts` é a implementação e deve bater com ela.
 
 ## 1. Visão geral
@@ -32,7 +31,7 @@ File-based em `src/routes`; `src/routeTree.gen.ts` é gerado pelo plugin e **ver
 
 ### Bootstrap e deploy
 `main.tsx` aguarda `worker.start()` (import dinâmico de `src/mocks/browser`, só se `VITE_ENABLE_MOCKS !== 'false'`) e só então renderiza. `.env` versionado com os padrões (sem segredos). `vercel.json`: rewrite `/(.*) → /index.html` (a Vercel serve arquivos estáticos, como `mockServiceWorker.js`, antes dos rewrites).
-Playwright: `webServer = pnpm preview` (porta 4173) — **rode `pnpm build` antes de `pnpm test:e2e`**; projetos `chromium-desktop` (1440) e `chromium-mobile` (390).
+Playwright: `webServer = pnpm preview` (porta 4173, reaproveitado se já estiver no ar fora do CI) — **rode `pnpm build` antes de `pnpm test:e2e`** (um preview antigo esquecido na 4173 serve o `dist/` dele); projetos `chromium-desktop` (1440) e `chromium-mobile` (390).
 
 ### Tokens de design
 `src/index.css`: variáveis `--jg-*` em `:root` (valores do Figma) → mapeadas para as variáveis do shadcn → expostas no Tailwind via `@theme inline` (`bg-surface`, `bg-surface-dark`, `text-brand`, `text-subtle`, `rounded-art`, `max-w-content`, `shadow-field`…). Tabela completa e origem em `design/tokens.md`; tela → node-id em `design/frames.md`.
@@ -40,8 +39,9 @@ Playwright: `webServer = pnpm preview` (porta 4173) — **rode `pnpm build` ante
 - Fonte única Roboto Mono, self-host (`public/fonts/roboto-mono-latin-var.woff2`, variável 400–700, subset latin), `font-display: swap` + `<link rel="preload">`. Sem Google Fonts em runtime (teste em `e2e/layout.spec.ts`).
 - Assets do layout em `public/assets/` (ícones SVG, artes de NFT em webp 400/800).
 
-Cenário de mock: query param `?scenario=<nome>` (persistido na sessão) ou painel de dev (canto inferior, só com mocks ligados). Reset: `?reset=1` ou botão "Resetar cenário".
-Bootstrap: `await worker.start()` ANTES de criar o socket e renderizar a app (o MSW precisa ter substituído o `WebSocket` global antes do `socket.io-client` capturá-lo). Por isso a app inteira é carregada com `import('@/app/app')` **depois** do start — ver §5 "Limitações do binding".
+Cenário de mock: query param `?scenario=<nome>` (persistido no `sessionStorage` da aba) ou `window.__mock.setScenario()`. Reset do banco mock (e cenário de volta a `default`): `?reset=1` ou `window.__mock.reset()`. Não há painel visual de cenários.
+`<head>`: `lang="pt-BR"`, `meta description` e `<title>` padrão no `index.html` (valem antes do JS); cada página atualiza as duas tags com `usePageMeta` (`src/lib/page-meta.ts`) em vez de criar duplicadas. `public/robots.txt` libera o catálogo e bloqueia as rotas privadas.
+Bootstrap: `await worker.start()` ANTES de criar o socket e renderizar a app (o MSW precisa ter substituído o `WebSocket` global antes do `socket.io-client` capturá-lo). Por isso a app inteira é carregada com `import('@/app/app')` **depois** do start — ver §5 "Limitações do binding". Para não serializar download e boot, o plugin `preload-app-graph` (`vite.config.ts`) injeta `<link rel="modulepreload">` do grafo estático de `src/app/app.tsx` no `index.html`: o navegador baixa e compila esses chunks enquanto o MSW sobe, mas só os **executa** no `import()` (a ordem de avaliação exigida pelo binding continua igual).
 
 ## 3. Dinheiro e quantidades
 - Tipo `Eth = string` decimal (ex.: `"0.125000000000000000"`), regex validada no zod.
@@ -139,7 +139,7 @@ Mesma key + mesmo payload → devolve o mesmo pedido (sem duplicar). Mesma key +
 Implementação em `src/contracts/*.ts` (sem alias `@/`, para os specs importarem). Acréscimos ao contrato acima:
 - `Eth`: regex `^(0|[1-9]\d*)(\.\d{1,18})?$`, forma **canônica sem zeros à direita** (`"0.125"`, não `"0.125000…"`). `lib/money.ts`: `toEth`, `add`, `sub`, `mul(preço, qtdInteira)`, `percentOf`, `compare`, `min`, `formatEth` (pt-BR, `1.234,5 ETH`).
 - `NftSummary.collection` = `{ slug, name }`; `NftSummary.category` ∈ `arte|games|musica|fotografia|colecionaveis`; `price` = menor preço entre edições com estoque (ou entre todas, se esgotado); `available` = soma. `NftDetail.creator` = `{ name, address }`.
-- **Novo** `GET /catalog/facets` → `{ collections: {slug,name}[], categories: {slug,name}[] }` (opções dos filtros).
+- **Novo** `GET /catalog/facets` → `CatalogFacets` (ver acima: coleções e categorias com `count`, `priceRange` com os limites do slider de preço).
 - `GET /nfts`: arrays repetidos sem colchetes (`collection=a&collection=b`; Axios com `paramsSerializer: { indexes: null }`). Padrões `sort=newest`, `page=1`, `pageSize=12` (máx. 48 → senão 422). `q` busca em título e nome da coleção. `NftListQuerySchema` serve de base para o `validateSearch`.
 - `CartItem.editionLabel` adicionado. Carrinho: somar quantidade da mesma edição; exceder estoque → 409 `AVAILABILITY_CONFLICT` com `details: { editionId, available }`. Merge ignora itens inválidos/esgotados e limita ao estoque.
 - `POST /quote` é **pública** (carrinho de convidado); com Bearer, a cotação fica vinculada ao usuário. Cupom case-insensitive. Taxa de rede fixa `0.0025`. `version` = soma das versões das edições cotadas. Validade 5 min. Erros de cupom vêm com `fields.coupon`.
@@ -153,10 +153,10 @@ Implementação em `src/contracts/*.ts` (sem alias `@/`, para os specs importare
 `request(schema, config)` → resposta validada pelo zod no interceptor (`config.schema`); `requestVoid(config)` para 204. Toda falha vira `ApiRequestError { code, status, fields, details }`, com `code` = `ErrorCode` do servidor ou `NETWORK_ERROR | TIMEOUT | INVALID_RESPONSE | UNKNOWN` (cliente). Cancelamento (`signal`) é repassado intacto. `isTransientError` (TRANSIENT/rede/timeout) é o único caso com retry automático de leitura. Token injetado via `setAuthTokenGetter` (ligado por `createAuth().install()`).
 
 ### Backend mock (`src/mocks`)
-- `db/`: estado único em memória, persistido em `localStorage['jungle-mock-db:v1']` após cada escrita; seed determinístico (`seed.ts`, PRNG mulberry32 com semente fixa): 48 NFTs `nft-001…nft-048`, edições `<id>-std|-rare|-leg` (a `std` sempre tem estoque), 6 coleções, 2 usuários com carteiras, cupons. Senhas: SHA-256(`salt:senha`) via `crypto.subtle`, salt aleatório por usuário.
+- `db/`: estado único em memória, persistido em `localStorage['jungle-mock-db:v1']` após cada escrita; seed determinístico (`seed.ts`, PRNG mulberry32 com semente fixa): 48 NFTs `nft-001…nft-048`, edições `<id>-std|-rare|-leg` (a `std` sempre tem estoque), 6 coleções, 2 usuários com carteiras, cupons. Senhas: SHA-256(`salt:senha`) via `crypto.subtle`, salt por usuário (fixo nos 2 usuários do seed, para o banco ser determinístico; `randomHex(16)` no cadastro).
 - `handlers/utils.ts#route`: toda rota `/api` passa por efeitos do cenário → assentamento de pedidos vencidos → resolver; erros são `throw apiError(...)` tipados; corpo validado com os schemas de `src/contracts` (422 com `fields`).
 - `events.ts`: barramento interno do servidor (`edition.changed`, `order.changed`) que `src/mocks/socket.ts` liga ao Socket.IO mock.
-- Imagens de NFT: `/mock-images/<nftId>-<n>.svg`, SVG generativo determinístico servido pelo MSW (sem dependência externa).
+- Imagens de NFT: as 4 artes do Figma em `public/assets/nft/<arte>-{400,800}.webp`, em rodízio determinístico no seed (3 por NFT). A app monta `srcset` 400w/800w (`nftImageProps`).
 
 ## 5. Contratos de tempo real
 Transporte: `socket.io-client` com `transports: ['websocket']`, interceptado por `ws.link` do MSW + `toSocketIo` (`@mswjs/socket.io-binding`).
@@ -244,6 +244,8 @@ Implementação: `src/features/auth/session.ts` (`createAuth`), instanciado uma 
 | Query | staleTime | retry | Observações |
 |---|---|---|---|
 | nfts (lista) | 30 s | 2 (só TRANSIENT/rede) | `placeholderData: keepPreviousData` |
+| facets | 5 min | 2 | contagens do catálogo inteiro |
+| sessão (`GET /auth/session`) | 0 | não | confirma a sessão restaurada no boot (§6) |
 | nft detalhe | 30 s | 2 | atualizado por `nft.updated` |
 | cart | 0 | 1 | invalidado após mutação e eventos |
 | quote | 0 | 0 | nunca reutilizada após mudança |
@@ -295,7 +297,13 @@ Fixtures: ≥ 40 NFTs (filtros/paginação), 2 usuários (`ana@jungle.test` / `S
 - **Flakiness:** suíte rodada 2× seguidas sem retries no Windows: 171 passaram, 8 visuais pulados (por desenho), 0 falhas nas duas. `@slow` também rodou com `--repeat-each=2`: 24/24.
 
 ## 10. Decisões de UX
-TODO
+- **Estados de tela.** Toda tela com dado remoto tem cinco estados. Carregando: skeleton com shimmer e as mesmas dimensões do conteúdo final, `role="status"` + `aria-busy`. O skeleton do detalhe espelha trilha, galeria e "Mais desta coleção", para o footer não pular. Os outros quatro: vazio com uma ação de saída (ex.: "Limpar filtros" no catálogo filtrado), erro com "Tentar novamente" (só depois dos retries automáticos de erro transitório), sucesso, e refetch em background que mantém o dado anterior (`keepPreviousData`; no resumo, "Atualizando valores…" + `aria-busy`).
+- **Feedback.** Mutações e eventos de tempo real usam `notify()` (`src/lib/notify.ts`), que dispara o toast (sonner, canto inferior direito) e escreve o mesmo texto na região `aria-live="polite"` do root. Erro de campo fica no campo (`aria-invalid` + `aria-describedby`, foco no primeiro inválido). Erro geral de formulário usa `role="alert"`.
+- **Nada finge funcionar** (invariante 10). O que está fora do escopo fica desabilitado com aviso: login social, "Esqueceu a senha?", newsletter, "Criadores"/"Aprenda", Tab Bar. Pedido só aparece como confirmado com `confirmed` da API ou do evento. Durante `pending`, a tela diz que está aguardando a confirmação da rede.
+- **Otimista só onde o desfazer é barato:** favoritos e quantidade/remoção no carrinho, com rollback + aviso. Cupom, cotação e pedido nunca são otimistas: dependem da resposta do servidor.
+- **Mudança de valores nunca é silenciosa.** Preço ou estoque que muda pelo socket aparece com o antes e o depois (detalhe, carrinho, checkout). No checkout, o pagamento fica bloqueado até "Aceitar novos valores". A escolha do usuário (quantidade) nunca é corrigida sozinha: a tela avisa e oferece a correção.
+- **URL é estado:** filtros, busca, ordem, recorte e página do catálogo ficam na URL (voltar/avançar, compartilhar e refresh funcionam). `redirect` preserva o destino depois do login.
+- **Movimento:** `prefers-reduced-motion` desliga shimmer, transições e rolagem suave (CSS global).
 
 ## 11. Desvios do Figma e acessibilidade
 - **Home/Detalhe:** artes de NFT do Figma em rodízio no seed (4 imagens para 48 NFTs, 3 por NFT). Coleções e nomes vêm do mock, não dos textos do Figma.
@@ -360,4 +368,36 @@ TODO
 - Tab Bar mobile do Figma (`70395:245`) não implementada; mobile usa header compacto + footer empilhado.
 - Figma não tem mobile para Confirmação, Perfil e Carteiras: adaptados do desktop com os mesmos tokens (cartão de largura total; sidebar da conta vira faixa no topo).
 - Comparação visual da Sessão 9 feita contra PNGs exportados manualmente (`design/ref/`, fora do git): o Figma MCP segue no limite do plano Starter.
-- TODO: demais itens.
+- **Performance mobile do Lighthouse abaixo de 90** (82 na home, 66 no detalhe, mediana de 3 runs). O backend mock roda no navegador e fica no caminho crítico do LCP; ver §13.
+- Sem SSR/pré-renderização: crawlers sem JS veem só o `<title>`/`description` padrão do `index.html`; os específicos de cada rota (`usePageMeta`) aparecem depois do JS.
+- Os dados da demo vivem no `localStorage` de cada navegador (banco mock). Não há estado compartilhado entre dispositivos, e limpar os dados do site volta ao seed. Cadastros só existem naquele navegador.
+- Tempo real só existe dentro da mesma aba: o servidor Socket.IO mock roda na página, então uma compra em outra aba ou dispositivo não gera evento aqui. Para ver mudança de preço/estoque, use os cenários (`price-change`, `sold-out`) ou `window.__mock.updateEdition`.
+- E2E só em Chromium (desktop 1440 e mobile 390); Firefox/WebKit não fazem parte da suíte.
+- Regressão visual compara só em Linux (baselines da imagem oficial do Playwright); no Windows/macOS os 8 testes `@visual` são pulados.
+
+## 13. Performance e Lighthouse
+**Como medir:** `pnpm lhci` (`scripts/lhci.mjs`). Faz o build, sobe o `pnpm preview` e roda `@lhci/cli` em `/` e `/nft/nft-001`, nos perfis **mobile** (padrão do Lighthouse: Moto G Power emulado, 4G lento simulado a 150 ms RTT / 1,6 Mbps, CPU 4×) e **desktop** (`preset=desktop`), 3 runs cada. Grava HTML+JSON de todos os runs em `lighthouse/reports/{mobile,desktop}/` (com `manifest.json`) e as medianas em `lighthouse/reports/summary.{md,json}`. Asserções (`lighthouse/lighthouserc.json`, mediana): Perf ≥ 0,90, A11y ≥ 0,95, BP ≥ 0,95, SEO ≥ 0,90. O script sai com código 1 se alguma falhar. `--no-build` reaproveita o `dist/`; `--summary-only` só refaz o resumo.
+
+**Resultado versionado** (mediana de 3 runs; entre parênteses o Perf de cada run):
+
+| Perfil | Página | Perf | A11y | BP | SEO | LCP | CLS | TBT |
+|---|---|---|---|---|---|---|---|---|
+| mobile | `/` | **82** (82 / 82 / 82) | 100 | 100 | 100 | 4,74 s | 0 | 125 ms |
+| mobile | `/nft/nft-001` | **66** (83 / 66 / 63) | 100 | 100 | 100 | 4,68 s | 0 | 689 ms |
+| desktop | `/` | **98** | 100 | 100 | 100 | 1,17 s | 0 | 0 ms |
+| desktop | `/nft/nft-001` | **99** | 100 | 100 | 100 | 1,03 s | 0 | 0 ms |
+
+Ambiente: Node 24.21.0 · Lighthouse 13.6.0 (`@lhci/cli` 0.16.1) · Chrome 158.0.8127.88 headless · Windows 11 Pro (10.0.26300) x64 · AMD Ryzen 7 5700X (8 núcleos/16 threads) · 32 GB RAM · `benchmarkIndex` ≈ 2800 · 26/11/2026. Servidor: `vite preview` local (gzip, sem CDN), mocks ligados, cenário `default` (latência simulada de 150–400 ms por chamada `/api`), storage limpo a cada run (o MSW instala o service worker e faz o seed toda vez). Throttling **simulado** (Lantern), padrão do Lighthouse.
+
+**Otimizações aplicadas** (valem para usuários reais, não só para o teste):
+- `modulepreload` do grafo da app durante o boot do MSW (§2). Antes, o navegador só descobria os chunks da app quando o worker terminava. Mobile foi de 72/62 para 82/83 nos melhores runs, e o TBT caiu de 561/1268 ms para ~120 ms.
+- Skeleton do detalhe com a mesma geometria do conteúdo: CLS desktop do detalhe de 0,155 para 0.
+- Slider de preço com 24 px de altura de alvo (WCAG 2.5.8, `target-size`), sem mudar o layout: A11y desktop da home de 97 para 100.
+- Já existiam: imagens com `width`/`height` e `srcset` 400w/800w; `loading="lazy"` fora da dobra; `fetchpriority="high"` na arte do hero e na imagem principal do detalhe; preload da fonte self-host (woff2 variável, subset latin, `font-display: swap`); code-splitting por rota (`autoCodeSplitting`); devtools só em dev.
+- SEO: `lang="pt-BR"`, `<title>` e `meta description` por rota (`usePageMeta`), `robots.txt`. Sem erros no console (auditoria `errors-in-console` passa).
+
+**Abaixo da meta: Performance mobile (82 na home, 66 no detalhe).** Desktop passa com folga, e A11y, BP e SEO ficam em 100 nos dois perfis. As causas medidas:
+1. **O backend roda no navegador.** O chunk do mock (`src/mocks/browser`) tem 469 kB (174 kB gzip): `msw` (228 kB de fonte), mais `tough-cookie` e `tldts` (dependências internas do MSW para cookies, ~270 kB de fonte), `@mswjs/interceptors` e os handlers. Ele precisa ser baixado, executado e registrar o service worker **antes** da primeira chamada `/api`, porque o MSW é obrigatório na stack e a demo pública usa mocks. A 1,6 Mbps simulados isso custa cerca de 0,9 s só de transferência, na frente da cadeia do LCP: `index` → mock → app → chunk da rota → `GET /api/...` (150–400 ms simulados) → imagem. Com backend real, esse chunk e a latência simulada saem do caminho crítico.
+2. **LCP depende de dado.** A imagem LCP (hero na home, arte do NFT no detalhe) só é conhecida depois do JSON da API. É uma SPA estática (sem SSR/SSG na stack), então não dá para pré-renderizar o HTML com a imagem. Um `preload` fixo no `index.html` baixaria uma arte errada nas outras rotas.
+3. **Dispersão no detalhe mobile** (83 / 66 / 63). Os runs ruins têm uma tarefa longa sem atribuição a script perto de 0,7 s simulados (131–874 ms depois do multiplicador de CPU 4×). No trace ela aparece sem nenhum evento-filho de JS, layout ou parse: é trabalho nativo do Chrome. Num build A/B com mocks desligados ela também aparece (119–156 ms simulados), mas menor. O resto da página é estável: LCP de 4,65–4,71 s nos 3 runs.
+Medidas que não adotamos por serem truques só para o teste: desligar o MSW no build medido, servir dados embutidos no HTML, pré-carregar no `index.html` uma imagem que só serve a uma rota.

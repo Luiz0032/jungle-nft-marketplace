@@ -1,7 +1,9 @@
 import { Link } from '@tanstack/react-router'
 import { Button } from '@/components/ui/button'
+import { usePageMeta } from '@/lib/page-meta'
 
 export function NotFound() {
+  usePageMeta('Página não encontrada', 'A página procurada não existe no marketplace Kurio.')
   return (
     <section
       aria-labelledby="not-found-title"
