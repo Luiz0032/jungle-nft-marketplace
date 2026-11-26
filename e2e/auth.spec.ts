@@ -78,10 +78,12 @@ test.describe('auth @auth', () => {
     expect(await socketUsers(page)).toEqual(['usr-ana'])
   })
 
-  test('redirect externo é ignorado (sem open redirect)', async ({ page }) => {
-    await login(page, ANA, '//evil.example.com/x')
-    await expect(page).toHaveURL('/')
-  })
+  for (const evil of ['//evil.example.com/x', '/\\evil.example.com', '/\t/evil.example.com', 'https://evil.example.com']) {
+    test(`redirect externo é ignorado (sem open redirect): ${JSON.stringify(evil)}`, async ({ page }) => {
+      await login(page, ANA, evil)
+      await expect(page).toHaveURL('/')
+    })
+  }
 
   test('refresh recupera a sessão via /auth/session', async ({ page }) => {
     await login(page, ANA, '/profile')
