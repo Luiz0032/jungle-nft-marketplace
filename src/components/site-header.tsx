@@ -3,6 +3,7 @@ import { LogOut } from 'lucide-react'
 import { useCurrentUser } from '@/features/auth/hooks'
 import { useLogoutMutation } from '@/features/auth/queries'
 import { firstName } from '@/features/auth/session'
+import { useCart } from '@/features/cart/queries'
 import { notify } from '@/lib/notify'
 import { cn } from '@/lib/utils'
 
@@ -93,19 +94,36 @@ export function SiteHeader({ className }: { className?: string }) {
           >
             <img src="/assets/icons/search.svg" alt="" width={20} height={20} />
           </Link>
-          <Link
-            to="/cart"
-            className="grid size-8 place-items-center rounded-md outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring"
-            aria-label="Carrinho"
-            activeProps={{ 'aria-current': 'page' }}
-          >
-            {/* O badge com a contagem entra quando o carrinho existir quando o carrinho existir; nada de número falso. */}
-            <img src="/assets/icons/cart.svg" alt="" width={24} height={24} />
-          </Link>
+          <CartLink />
           <AccountActions />
         </div>
       </div>
     </header>
+  )
+}
+
+/** Carrinho com badge (Figma: círculo 16px, Tiny/10 Medium). Contagem real do carrinho; sem itens, sem badge. */
+function CartLink() {
+  const { count, status } = useCart()
+  const shown = status === 'success' && count > 0
+  return (
+    <Link
+      to="/cart"
+      className="relative grid size-8 place-items-center rounded-md outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring"
+      aria-label={shown ? `Carrinho, ${count} ${count === 1 ? 'item' : 'itens'}` : 'Carrinho'}
+      activeProps={{ 'aria-current': 'page' }}
+    >
+      <img src="/assets/icons/cart.svg" alt="" width={24} height={24} />
+      {shown && (
+        <span
+          aria-hidden
+          data-testid="cart-badge"
+          className="absolute -top-0.5 -right-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-primary px-1 text-[10px] leading-none font-medium text-primary-foreground"
+        >
+          {count > 99 ? '99+' : count}
+        </span>
+      )}
+    </Link>
   )
 }
 

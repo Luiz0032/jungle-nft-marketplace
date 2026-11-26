@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { createFileRoute, Link, useCanGoBack, useRouter } from '@tanstack/react-router'
+import { createFileRoute, Link, useCanGoBack, useNavigate, useRouter } from '@tanstack/react-router'
 import { ArrowLeft, Share2, ShoppingCart } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useRealtime } from '@/app/realtime-context'
@@ -7,6 +7,7 @@ import { NotFound } from '@/components/not-found'
 import { Button } from '@/components/ui/button'
 import type { NftDetail } from '@/contracts'
 import { NftCard, NftCardSkeleton } from '@/features/catalog/components/nft-card'
+import { useAddToCart } from '@/features/cart/queries'
 import { nftListQuery } from '@/features/catalog/queries'
 import { FavoriteButton } from '@/features/favorites/components/favorite-button'
 import { EditionPicker, QuantityStepper } from '@/features/nft/components/edition-picker'
@@ -52,6 +53,18 @@ function NftDetailView({ nft, refreshing }: { nft: NftDetail; refreshing: boolea
   // Estoque pode cair por evento em tempo real: a quantidade exibida nunca passa do disponível.
   const qty = Math.min(Math.max(quantity, 1), Math.max(max, 1))
   const tokenId = `#${nft.id.replace(/^\D+/, '').padStart(4, '0')}`
+  const soldOut = max === 0
+  const navigate = useNavigate()
+  const addToCart = useAddToCart()
+  const add = (thenGoToCart: boolean) =>
+    addToCart.mutate(
+      { nftId: nft.id, editionId: edition.id, quantity: qty, title: `${nft.title} (${edition.label})`, available: max },
+      {
+        onSuccess: () => {
+          if (thenGoToCart) void navigate({ to: '/cart' })
+        },
+      },
+    )
 
   // Aviso acessível quando o servidor muda preço/estoque deste NFT (evento já aplicado no cache).
   useEffect(
@@ -157,29 +170,34 @@ function NftDetailView({ nft, refreshing }: { nft: NftDetail; refreshing: boolea
                 </p>
               </div>
               <div className="flex items-center gap-3 lg:gap-2">
+                {/* "Comprar": adiciona e leva ao carrinho (o checkout parte dele). Ícone: só adiciona. */}
                 <button
                   type="button"
-                  disabled
-                  aria-describedby="buy-unavailable"
-                  className="flex h-[60px] flex-1 cursor-not-allowed items-center justify-center rounded-[10px] bg-primary text-base font-bold text-primary-foreground opacity-60 lg:h-10 lg:w-[130px] lg:flex-none lg:rounded-md"
+                  disabled={soldOut || addToCart.isPending}
+                  aria-describedby={soldOut ? 'buy-unavailable' : undefined}
+                  onClick={() => add(true)}
+                  className="flex h-[60px] flex-1 items-center justify-center rounded-[10px] bg-primary text-base font-bold text-primary-foreground outline-none hover:bg-primary/90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-60 lg:h-10 lg:w-[130px] lg:flex-none lg:rounded-md"
                 >
                   <span className="lg:hidden">Comprar NFT</span>
                   <span className="hidden lg:inline">COMPRAR</span>
                 </button>
                 <button
                   type="button"
-                  disabled
+                  disabled={soldOut || addToCart.isPending}
                   aria-label="Adicionar ao carrinho"
-                  aria-describedby="buy-unavailable"
-                  className="grid size-[60px] cursor-not-allowed place-items-center rounded-[10px] border border-primary text-primary opacity-60 lg:hidden"
+                  aria-describedby={soldOut ? 'buy-unavailable' : undefined}
+                  onClick={() => add(false)}
+                  className="grid size-[60px] place-items-center rounded-[10px] border border-primary text-primary outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 lg:size-10 lg:rounded-md"
                 >
                   <ShoppingCart className="size-5" aria-hidden />
                 </button>
                 <FavoriteButton nftId={nft.id} title={nft.title} variant="pill" className="hidden lg:flex" />
               </div>
-              <p id="buy-unavailable" className="text-xs text-subtle lg:sr-only">
-                Compra indisponível no momento.
-              </p>
+              {soldOut && (
+                <p id="buy-unavailable" className="text-xs text-coral">
+                  Esta edição está esgotada.
+                </p>
+              )}
             </div>
 
             <dl className="flex flex-col gap-3 text-base leading-5 text-foreground">

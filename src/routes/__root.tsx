@@ -6,6 +6,7 @@ import { NotFound } from '@/components/not-found'
 import { SiteFooter } from '@/components/site-footer'
 import { SiteHeader } from '@/components/site-header'
 import type { Auth } from '@/features/auth/session'
+import { CartSync } from '@/features/cart/components/cart-sync'
 import { LIVE_REGION_ID } from '@/lib/notify'
 import { cn } from '@/lib/utils'
 
@@ -55,6 +56,7 @@ function RootLayout() {
         <SiteFooter className={authScreen ? 'max-lg:hidden' : undefined} />
       </div>
       <div id={LIVE_REGION_ID} aria-live="polite" aria-atomic="true" className="sr-only" />
+      <CartSync />
       {/* Embaixo: no topo direito o toast cobria o botão Entrar/Sair do header. */}
       <Toaster theme="dark" richColors position="bottom-right" />
       <Suspense>
