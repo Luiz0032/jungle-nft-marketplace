@@ -1,9 +1,23 @@
-import { http, HttpResponse } from 'msw'
-import { env } from '@/lib/env'
+import { HttpResponse } from 'msw'
+import { authHandlers } from './auth'
+import { cartHandlers } from './cart'
+import { catalogHandlers } from './catalog'
+import { favoritesHandlers } from './favorites'
+import { imageHandlers } from './images'
+import { ordersHandlers } from './orders'
+import { profileHandlers, walletHandlers } from './profile'
+import { quoteHandlers } from './quote'
+import { route } from './utils'
 
-const api = (path: string) => `${env.apiUrl}${path}`
-
-/** A versão completa substitui/expande com todas as rotas da seção 4 do ARCHITECTURE.md. */
 export const handlers = [
-  http.get(api('/health'), () => HttpResponse.json({ status: 'ok', mock: true })),
+  route('get', '/health', () => HttpResponse.json({ status: 'ok', mock: true })),
+  ...authHandlers,
+  ...catalogHandlers,
+  ...favoritesHandlers,
+  ...cartHandlers,
+  ...quoteHandlers,
+  ...ordersHandlers,
+  ...profileHandlers,
+  ...walletHandlers,
+  ...imageHandlers,
 ]

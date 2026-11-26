@@ -129,6 +129,29 @@ Mesma key + mesmo payload → devolve o mesmo pedido (sem duplicar). Mesma key +
 `GET/PATCH /profile` · `PUT /profile/avatar` (data URL ≤ 1 MB) · `POST /profile/password` `{ current, next }`
 `GET /wallets` · `POST /wallets` · `PATCH /wallets/:id` → `Wallet { id; label; address; network; primary: boolean }` (exatamente uma primária)
 
+### Detalhes e acréscimos definidos na implementação
+Implementação em `src/contracts/*.ts` (sem alias `@/`, para os specs importarem). Acréscimos ao contrato acima:
+- `Eth`: regex `^(0|[1-9]\d*)(\.\d{1,18})?$`, forma **canônica sem zeros à direita** (`"0.125"`, não `"0.125000…"`). `lib/money.ts`: `toEth`, `add`, `sub`, `mul(preço, qtdInteira)`, `percentOf`, `compare`, `min`, `formatEth` (pt-BR, `1.234,5 ETH`).
+- `NftSummary.collection` = `{ slug, name }`; `NftSummary.category` ∈ `arte|games|musica|fotografia|colecionaveis`; `price` = menor preço entre edições com estoque (ou entre todas, se esgotado); `available` = soma. `NftDetail.creator` = `{ name, address }`.
+- **Novo** `GET /catalog/facets` → `{ collections: {slug,name}[], categories: {slug,name}[] }` (opções dos filtros).
+- `GET /nfts`: arrays repetidos sem colchetes (`collection=a&collection=b`; Axios com `paramsSerializer: { indexes: null }`). Padrões `sort=newest`, `page=1`, `pageSize=12` (máx. 48 → senão 422). `q` busca em título e nome da coleção. `NftListQuerySchema` serve de base para o `validateSearch`.
+- `CartItem.editionLabel` adicionado. Carrinho: somar quantidade da mesma edição; exceder estoque → 409 `AVAILABILITY_CONFLICT` com `details: { editionId, available }`. Merge ignora itens inválidos/esgotados e limita ao estoque.
+- `POST /quote` é **pública** (carrinho de convidado); com Bearer, a cotação fica vinculada ao usuário. Cupom case-insensitive. Taxa de rede fixa `0.0025`. `version` = soma das versões das edições cotadas. Validade 5 min. Erros de cupom vêm com `fields.coupon`.
+- `POST /orders`: sem `Idempotency-Key` → 422. Replay (mesma key + mesmo payload, comparação por JSON com chaves ordenadas, escopo por usuário) → **200** com o estado atual do pedido. Cotação inexistente/de outro usuário/expirada/versão diferente/preço ou estoque mudou desde a cotação → 409 `QUOTE_OUTDATED`. `walletId` deve ser do usuário e `network` igual à da carteira (senão 422). Estoque é **reservado** na criação e devolvido se `rejected`. Pedido assenta 2 s depois (5 s no `slow`), por timer ou preguiçosamente na próxima requisição (sobrevive a refresh).
+- `Receipt` = `{ lines: {nftId, editionId, title, editionLabel, image, unitPrice, quantity, lineTotal}[], subtotal, discount, networkFee, total, coupon: string|null, wallet: {id,label,address}, network, collector }`; `order.receipt` só é preenchido quando `confirmed`. `Network` ∈ `ethereum|polygon|base`.
+- `GET /wallets` → `Wallet[]`. `PATCH /wallets/:id` aceita `{ label?, primary?: true }` — só é possível **tornar** primária (as demais viram `false`), garantindo exatamente uma. A primeira carteira criada é primária.
+- Senha: 8–72 caracteres, com letra e número. `POST /profile/password` com senha atual errada → 422 `fields.current`; sucesso encerra as outras sessões. Avatar: data URL PNG/JPEG/WebP ≤ 1 MB decodificado.
+- Sessão dura 2 h. Sem header → 401 `UNAUTHENTICATED`; token desconhecido/expirado → 401 `SESSION_EXPIRED`.
+
+### Cliente HTTP (`src/lib/http.ts`)
+`request(schema, config)` → resposta validada pelo zod no interceptor (`config.schema`); `requestVoid(config)` para 204. Toda falha vira `ApiRequestError { code, status, fields, details }`, com `code` = `ErrorCode` do servidor ou `NETWORK_ERROR | TIMEOUT | INVALID_RESPONSE | UNKNOWN` (cliente). Cancelamento (`signal`) é repassado intacto. `isTransientError` (TRANSIENT/rede/timeout) é o único caso com retry automático de leitura. Token injetado via `setAuthTokenGetter` (ligado por `createAuth().install()`).
+
+### Backend mock (`src/mocks`)
+- `db/`: estado único em memória, persistido em `localStorage['jungle-mock-db:v1']` após cada escrita; seed determinístico (`seed.ts`, PRNG mulberry32 com semente fixa): 48 NFTs `nft-001…nft-048`, edições `<id>-std|-rare|-leg` (a `std` sempre tem estoque), 6 coleções, 2 usuários com carteiras, cupons. Senhas: SHA-256(`salt:senha`) via `crypto.subtle`, salt aleatório por usuário.
+- `handlers/utils.ts#route`: toda rota `/api` passa por efeitos do cenário → assentamento de pedidos vencidos → resolver; erros são `throw apiError(...)` tipados; corpo validado com os schemas de `src/contracts` (422 com `fields`).
+- `events.ts`: barramento interno do servidor (`edition.changed`, `order.changed`) que `src/mocks/socket.ts` liga ao Socket.IO mock.
+- Imagens de NFT: `/mock-images/<nftId>-<n>.svg`, SVG generativo determinístico servido pelo MSW (sem dependência externa).
+
 ## 5. Contratos de tempo real
 Transporte: `socket.io-client` com `transports: ['websocket']`, interceptado por `ws.link` do MSW + `toSocketIo` (`@mswjs/socket.io-binding`).
 Autenticação: `auth: { token }` no handshake; o mock associa o socket ao `userId`.
@@ -190,7 +213,9 @@ Otimista: favoritos (toggle) e quantidade do carrinho, com rollback + toast em e
 | `order-timeout` | POST /orders cria o pedido mas a resposta estoura timeout |
 | `payment-declined` | pedido termina `rejected` |
 | `socket-drop` | derruba o socket com pedido pendente e reconecta |
-Controle programático (Playwright): `window.__mock.setScenario()`, `.reset()`, `.emit(event)` — emite PELO servidor mock do socket, nunca direto na UI.
+Controle programático (Playwright): `window.__mock.setScenario()`, `.getScenario()`, `.reset()`, `.emit(event)` — emite PELO servidor mock do socket, nunca direto na UI. `window.__mock` só aparece **depois** de `worker.start()` (specs esperam por ele com `waitForFunction`).
+
+Implementação (`src/mocks/scenarios`): estado em `sessionStorage['jungle-mock-scenario']` (por aba, sobrevive a refresh). Latência e falhas do `flaky` saem de PRNG semeado por `cenário + nº da requisição` → **reproduzível** (mesma sequência de chamadas → mesmos resultados; `setScenario` zera o contador). Detalhes: `out-of-order` só afeta `GET /nfts` (2,5 s, 1,8 s, 1,1 s, 0,4 s, 0,15 s…); `session-expired` expira uma única vez; `sold-out` zera o estoque da 1ª linha no `POST /orders` e responde 409; `order-timeout` cria o pedido e segura a resposta 15 s (> timeout de 10 s do Axios); `payment-declined` assenta `rejected` e devolve o estoque. `price-change` e `socket-drop` dependem do socket.
 Fixtures: ≥ 40 NFTs (filtros/paginação), 2 usuários (`ana@jungle.test` / `Senha@123`, `bruno@jungle.test` / `Senha@123`), cupons `JUNGLE10` (válido), `EXPIRED5` (expirado).
 
 ## 10. Decisões de UX

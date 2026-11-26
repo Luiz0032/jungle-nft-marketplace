@@ -1,13 +1,9 @@
 import { QueryClient } from '@tanstack/react-query'
-import { isAxiosError } from 'axios'
+import { isTransientError } from '@/lib/http'
 
-/** Retry só para falhas transitórias (rede ou 5xx). 4xx nunca é repetido. */
+/** Retry só para falhas transitórias (TRANSIENT, rede, timeout). 4xx nunca é repetido. */
 function shouldRetry(failureCount: number, error: unknown): boolean {
-  if (failureCount >= 2) return false
-  if (!isAxiosError(error)) return false
-  if (error.code === 'ERR_CANCELED') return false
-  const status = error.response?.status
-  return status === undefined || status >= 500
+  return failureCount < 2 && isTransientError(error)
 }
 
 export function createQueryClient() {
