@@ -1,7 +1,12 @@
 import { expect, test } from '@playwright/test'
 import { isMobile } from './support/auth'
+import { bootMock } from './support/mock'
 
 test.describe('layout base @visual @a11y', () => {
+  test.beforeEach(async ({ page }) => {
+    await bootMock(page, 'default')
+  })
+
   test('fonte Roboto Mono self-hosted carrega e o tema do Figma é aplicado', async ({ page }) => {
     const fontRequests: string[] = []
     page.on('request', (req) => {

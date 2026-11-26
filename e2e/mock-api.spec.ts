@@ -18,7 +18,7 @@ const errorCode = (body: unknown) => ApiErrorSchema.parse(body).code
 
 test.describe('API mock @api', () => {
   test.beforeEach(async ({ page }) => {
-    await bootMock(page)
+    await bootMock(page, 'default')
   })
 
   test('catálogo: seed, filtros, ordenação, paginação e 404', async ({ page }) => {

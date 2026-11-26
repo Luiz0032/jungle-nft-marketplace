@@ -28,7 +28,7 @@ async function openCart(page: Page) {
 
 test.describe('carrinho @cart', () => {
   test.beforeEach(async ({ page }) => {
-    await bootMock(page)
+    await bootMock(page, 'default')
   })
 
   test('vazio mostra estado e link para o mercado', async ({ page }) => {

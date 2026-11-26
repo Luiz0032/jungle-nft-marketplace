@@ -12,7 +12,9 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:visual": "playwright test --grep @visual",
-    "lhci": "lhci autorun --config=lighthouse/lighthouserc.json"
+    "test:visual:update": "node scripts/visual-update.mjs",
+    "lhci": "lhci autorun --config=lighthouse/lighthouserc.json",
+    "test:slow": "playwright test --grep @slow"
   },
   "msw": {
     "workerDirectory": [

@@ -1,6 +1,7 @@
 import { expect, test, type Page } from '@playwright/test'
 import { ANA, loginAs } from './support/auth'
-import { bootMock, setScenario } from './support/mock'
+import { advanceUntil, freezeClock } from './support/clock'
+import { api, bootMock, login, setScenario } from './support/mock'
 
 const NFT = 'nft-002'
 const EDITION = `${NFT}-std`
@@ -48,7 +49,7 @@ const status = (page: Page) => page.getByTestId('order')
 
 test.describe('checkout @checkout', () => {
   test.beforeEach(async ({ page }) => {
-    await bootMock(page)
+    await bootMock(page, 'default')
   })
 
   test('compra completa: catálogo → carrinho → pagamento → recibo (snapshot)', async ({ page }) => {
@@ -261,5 +262,68 @@ test.describe('checkout @checkout', () => {
     const all = await orders(page)
     expect(all).toHaveLength(1)
     expect(all[0]).toMatchObject({ id: orderId, status: 'confirmed' })
+  })
+  test('relógio: pedido fica pendente até o servidor assentar; tempo real sozinho não confirma', async ({ page }) => {
+    await page.clock.install()
+    await readyToPay(page)
+    await freezeClock(page)
+    await confirmButton(page).click()
+    await advanceUntil(page, () => expect(status(page)).toHaveAttribute('data-status', 'pending', { timeout: 100 }))
+    await expect(page.getByRole('heading', { name: 'Processando pagamento…' })).toBeVisible()
+
+    // Com o relógio parado, passar tempo real não muda nada: a UI não "adivinha" confirmação.
+    await page.waitForTimeout(1_500)
+    await expect(status(page)).toHaveAttribute('data-status', 'pending')
+
+    // O servidor mock assenta 2 s (tempo do relógio) depois da criação e avisa pelo socket.
+    const advanced = await advanceUntil(page, () =>
+      expect(status(page)).toHaveAttribute('data-status', 'confirmed', { timeout: 100 }),
+    )
+    expect(advanced).toBeGreaterThanOrEqual(1_500)
+    await expect(page.getByRole('heading', { name: 'Pedido confirmado' })).toBeVisible()
+  })
+
+  test('relógio: cotação é renovada antes dos 5 min e o pedido sai com a renovada', async ({ page }) => {
+    await page.clock.install()
+    await readyToPay(page)
+    const quoteCalls: number[] = []
+    page.on('request', (r) => {
+      if (r.method() === 'POST' && new URL(r.url()).pathname === '/api/quote') quoteCalls.push(Date.now())
+    })
+    await freezeClock(page)
+
+    // 4 min 40 s: ainda válida, nenhuma renovação.
+    await page.clock.fastForward('04:40')
+    await page.waitForTimeout(300)
+    expect(quoteCalls).toHaveLength(0)
+    // A renovação é agendada 15 s antes de expirar.
+    await advanceUntil(page, async () => expect(quoteCalls.length).toBeGreaterThan(0), { step: 1_000, maxMs: 20_000 })
+
+    await advanceUntil(page, () => expect(confirmButton(page)).toBeEnabled({ timeout: 100 }))
+    await confirmButton(page).click()
+    await advanceUntil(page, () => expect(status(page)).toHaveAttribute('data-status', 'confirmed', { timeout: 100 }))
+    expect(await orders(page)).toHaveLength(1)
+  })
+
+  test('relógio: cotação vencida é recusada pelo servidor (QUOTE_OUTDATED)', async ({ page }) => {
+    await page.clock.install()
+    const token = await login(page)
+    const wallets = (await api(page, 'GET', '/wallets', { token })).body as { id: string; network: string; primary: boolean }[]
+    const wallet = wallets.find((w) => w.primary)!
+    const quote = (await api(page, 'POST', '/quote', { token, body: { items: [{ editionId: EDITION, quantity: 1 }] } }))
+      .body as { id: string; version: number }
+    const body = {
+      quoteId: quote.id,
+      quoteVersion: quote.version,
+      walletId: wallet.id,
+      network: wallet.network,
+      collector: { name: ANA.name, email: ANA.email },
+    }
+
+    await page.clock.fastForward('05:01')
+    const res = await api(page, 'POST', '/orders', { token, body, headers: { 'Idempotency-Key': 'e2e-expired' } })
+    expect(res.status).toBe(409)
+    expect(res.body).toMatchObject({ code: 'QUOTE_OUTDATED' })
+    expect(await orders(page)).toHaveLength(0)
   })
 })

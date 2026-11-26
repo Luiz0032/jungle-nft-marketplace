@@ -25,8 +25,8 @@ declare global {
   }
 }
 
-/** Abre a app, espera o worker MSW e reseta banco + cenário. */
-export async function bootMock(page: Page, scenario = 'default') {
+/** Abre a app, espera o worker MSW, reseta o banco (`window.__mock.reset()`) e ativa o cenário pedido (sempre explícito). */
+export async function bootMock(page: Page, scenario: string) {
   await page.goto('/')
   await page.waitForFunction(() => window.__mock !== undefined)
   await page.evaluate(async (name) => {

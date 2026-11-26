@@ -29,7 +29,7 @@ async function prices(page: Page): Promise<number[]> {
 
 test.describe('catálogo @catalog', () => {
   test.beforeEach(async ({ page }) => {
-    await bootMock(page)
+    await bootMock(page, 'default')
   })
 
   test('busca + filtros + ordem + página ficam na URL e o histórico volta cada passo', async ({ page }) => {

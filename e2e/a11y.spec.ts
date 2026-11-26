@@ -32,7 +32,7 @@ async function addToCart(page: Page) {
 
 test.describe('acessibilidade @a11y', () => {
   test.beforeEach(async ({ page }) => {
-    await bootMock(page)
+    await bootMock(page, 'default')
   })
 
   test('telas públicas sem violações axe e sem overflow horizontal', async ({ page }) => {

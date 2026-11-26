@@ -10,9 +10,14 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 1,
   workers: process.env.CI ? 2 : undefined,
   reporter: [['html', { open: 'never' }], ['list']],
+  // Baselines sem plataforma no nome: são sempre geradas em Linux (imagem oficial do Playwright, mesma
+  // versão do @playwright/test) — ver scripts/visual-update.mjs e .github/workflows/e2e.yml.
+  snapshotPathTemplate: '{testDir}/__screenshots__/{testFilePath}/{arg}-{projectName}{ext}',
+  expect: { toHaveScreenshot: { animations: 'disabled', caret: 'hide' } },
   use: {
     baseURL,
-    trace: 'on-first-retry',
+    // Trace de toda falha (inclusive a primeira tentativa), publicado como artifact no CI.
+    trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
     locale: 'pt-BR',
     timezoneId: 'America/Sao_Paulo',

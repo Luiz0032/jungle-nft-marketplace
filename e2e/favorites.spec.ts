@@ -13,7 +13,7 @@ async function openNft(page: Page) {
 
 test.describe('favoritos @favorites', () => {
   test.beforeEach(async ({ page }) => {
-    await bootMock(page)
+    await bootMock(page, 'default')
   })
 
   test('convidado é levado ao login e volta para favoritar', async ({ page }) => {

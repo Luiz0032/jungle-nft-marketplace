@@ -1,6 +1,11 @@
 import { expect, test } from '@playwright/test'
+import { bootMock } from './support/mock'
 
 test.describe('smoke @smoke', () => {
+  test.beforeEach(async ({ page }) => {
+    await bootMock(page, 'default')
+  })
+
   test('home renderiza com o worker MSW ativo', async ({ page }) => {
     await page.goto('/')
     await expect(page.getByRole('heading', { level: 2, name: 'Explorar NFTs' })).toBeAttached()

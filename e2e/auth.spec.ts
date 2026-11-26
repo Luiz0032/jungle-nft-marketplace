@@ -21,7 +21,7 @@ const socketUsers = (page: Page) =>
 
 test.describe('auth @auth', () => {
   test.beforeEach(async ({ page }) => {
-    await bootMock(page)
+    await bootMock(page, 'default')
   })
 
   test('cadastro: validação nos campos, conflito de e-mail e sucesso', async ({ page }) => {

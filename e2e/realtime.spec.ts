@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test'
 import { RealtimeEventSchema, type RealtimeEvent } from '../src/contracts'
+import { advanceUntil, freezeClock } from './support/clock'
 import { api, bootMock } from './support/mock'
 
 // Eventos saem SEMPRE do servidor Socket.IO mock (window.__mock → src/mocks/socket.ts) e chegam
@@ -20,7 +21,7 @@ async function lastEventFor(page: Page, resourceId: string): Promise<RealtimeEve
 
 test.describe('tempo real @realtime', () => {
   test.beforeEach(async ({ page }) => {
-    await bootMock(page)
+    await bootMock(page, 'default')
     await page.goto('/nft/nft-001')
     await expect(page.getByTestId(`edition-price-${EDITION}`)).toBeVisible()
     await waitForSocket(page)
@@ -103,5 +104,28 @@ test.describe('tempo real @realtime', () => {
     await expect(price).not.toHaveText(before, { timeout: 6_000 })
     const event = await lastEventFor(page, EDITION)
     expect(event.payload).toMatchObject({ editionId: EDITION })
+  })
+  test('relógio: price-change só emite depois do atraso do servidor (3 s)', async ({ page }) => {
+    const price = page.getByTestId(`edition-price-${EDITION}`)
+    const before = (await price.textContent())!
+    await page.clock.install()
+    await freezeClock(page)
+    await page.evaluate(() => window.__mock!.setScenario('price-change'))
+
+    let quoted = false
+    const quote = api(page, 'POST', '/quote', { body: { items: [{ editionId: EDITION, quantity: 1 }] } }).then((r) => {
+      quoted = true
+      return r
+    })
+    await advanceUntil(page, async () => expect(quoted).toBe(true))
+    expect((await quote).status).toBe(200)
+
+    // Tempo real passando com o relógio parado: o evento ainda não saiu.
+    await page.waitForTimeout(1_000)
+    await expect(price).toHaveText(before)
+
+    const advanced = await advanceUntil(page, () => expect(price).not.toHaveText(before, { timeout: 100 }))
+    expect(advanced).toBeGreaterThanOrEqual(2_500)
+    expect((await lastEventFor(page, EDITION)).type).toBe('nft.updated')
   })
 })

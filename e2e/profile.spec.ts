@@ -17,7 +17,7 @@ async function noHorizontalOverflow(page: Page) {
 
 test.describe('perfil @profile', () => {
   test.beforeEach(async ({ page }) => {
-    await bootMock(page)
+    await bootMock(page, 'default')
     await loginAs(page, ANA, '/profile')
     await expect(page.getByRole('heading', { level: 1, name: 'Perfil do colecionador' })).toBeVisible()
   })
@@ -121,7 +121,7 @@ test.describe('perfil @profile', () => {
 
 test.describe('carteiras @profile', () => {
   test.beforeEach(async ({ page }) => {
-    await bootMock(page)
+    await bootMock(page, 'default')
     await loginAs(page, ANA, '/wallets')
     await expect(page.getByRole('heading', { level: 1, name: 'Carteiras' })).toBeVisible()
   })
