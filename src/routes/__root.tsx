@@ -3,6 +3,7 @@ import { createRootRouteWithContext, Outlet } from '@tanstack/react-router'
 import { lazy, Suspense } from 'react'
 import { Toaster } from 'sonner'
 import { NotFound } from '@/components/not-found'
+import { SiteFooter } from '@/components/site-footer'
 import { SiteHeader } from '@/components/site-header'
 
 export type RouterContext = { queryClient: QueryClient }
@@ -32,15 +33,18 @@ function RootLayout() {
     <>
       <a
         href="#conteudo"
-        className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:rounded-md focus:bg-primary focus:px-3 focus:py-2"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:rounded-md focus:bg-primary focus:px-3 focus:py-2 focus:text-primary-foreground"
       >
         Pular para o conteúdo
       </a>
-      <SiteHeader />
-      <main id="conteudo" className="mx-auto max-w-7xl px-4">
-        <Outlet />
-      </main>
-      <Toaster richColors position="top-right" />
+      <div className="flex min-h-dvh flex-col">
+        <SiteHeader />
+        <main id="conteudo" tabIndex={-1} className="mx-auto w-full max-w-content flex-1 px-4 outline-none lg:px-0">
+          <Outlet />
+        </main>
+        <SiteFooter />
+      </div>
+      <Toaster theme="dark" richColors position="top-right" />
       <Suspense>
         <Devtools />
       </Suspense>

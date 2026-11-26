@@ -3,74 +3,103 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Roboto Mono variável (400–700), subset latin — self-host. Preload em index.html. */
+@font-face {
+  font-family: 'Roboto Mono';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url('/fonts/roboto-mono-latin-var.woff2') format('woff2');
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F,
+    U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
 /*
- * Tokens de design.
- * TODO(design/tokens.md): o arquivo ainda não existe.
- * Os valores abaixo são PROVISÓRIOS; substituir pelos hex/fonte/raios do Figma.
- * Fonte única de verdade: as variáveis --jg-* abaixo; o shadcn consome via @theme inline.
+ * Tokens de design — valores do Figma (ver design/tokens.md).
+ * Fonte única: variáveis --jg-*; o shadcn consome via mapeamento abaixo e @theme inline.
  */
 :root {
-  /* marca */
-  --jg-brand: #7c3aed;
-  --jg-brand-foreground: #ffffff;
-  --jg-accent: #22c55e;
-
   /* superfícies */
-  --jg-bg: #0b0b0f;
-  --jg-surface: #15151c;
-  --jg-surface-2: #1e1e28;
-  --jg-border: #2a2a36;
+  --jg-ink: #140d0a;
+  --jg-surface-card: #241612;
+  --jg-surface-raised: #2f1d15;
+  --jg-surface-dark: #38220f;
+  --jg-border: #3f2319;
+  --jg-border-soft: #55321f;
+  --jg-elevated: #fbfbfb;
+  --jg-gray-light: #ededed;
+
+  /* marca */
+  --jg-primary: #d28a4c;
+  --jg-accent: #e89b55;
 
   /* texto */
-  --jg-text: #f4f4f6;
-  --jg-text-muted: #a1a1b0;
+  --jg-fg: #f5f1eb;
+  --jg-text-primary: #f7f3ec;
+  --jg-text-secondary: #cfb28c;
+  --jg-secondary: #b39463;
 
   /* feedback */
-  --jg-success: #22c55e;
-  --jg-warning: #f59e0b;
-  --jg-danger: #ef4444;
+  --jg-success: #00a66c;
+  --jg-coral: #f0805f;
 
-  --radius: 0.75rem;
+  --radius: 6px;
 
   /* mapeamento shadcn */
-  --background: var(--jg-bg);
-  --foreground: var(--jg-text);
-  --card: var(--jg-surface);
-  --card-foreground: var(--jg-text);
-  --popover: var(--jg-surface-2);
-  --popover-foreground: var(--jg-text);
-  --primary: var(--jg-brand);
-  --primary-foreground: var(--jg-brand-foreground);
-  --secondary: var(--jg-surface-2);
-  --secondary-foreground: var(--jg-text);
-  --muted: var(--jg-surface-2);
-  --muted-foreground: var(--jg-text-muted);
-  --accent: var(--jg-surface-2);
-  --accent-foreground: var(--jg-text);
-  --destructive: var(--jg-danger);
+  --background: var(--jg-ink);
+  --foreground: var(--jg-fg);
+  --card: var(--jg-surface-card);
+  --card-foreground: var(--jg-fg);
+  --popover: var(--jg-surface-raised);
+  --popover-foreground: var(--jg-fg);
+  --primary: var(--jg-primary);
+  --primary-foreground: var(--jg-ink);
+  --secondary: var(--jg-surface-dark);
+  --secondary-foreground: var(--jg-fg);
+  --muted: var(--jg-surface-raised);
+  --muted-foreground: var(--jg-text-secondary);
+  --accent: var(--jg-surface-raised);
+  --accent-foreground: var(--jg-fg);
+  --destructive: var(--jg-coral);
   --border: var(--jg-border);
-  --input: var(--jg-border);
-  --ring: var(--jg-brand);
+  --input: var(--jg-border-soft);
+  --ring: var(--jg-primary);
 }
 
 @theme {
-  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
-  --font-display: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'Roboto Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --font-mono: 'Roboto Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  --text-display: 43px;
+  --text-display--line-height: 70px;
+  --text-heading: 24px;
+  --text-heading--line-height: 1.2;
 
   --breakpoint-sm: 40rem;
   --breakpoint-md: 48rem;
   --breakpoint-lg: 64rem;
-  --breakpoint-xl: 90rem;
+  --breakpoint-xl: 80rem;
+
+  --container-content: 1200px;
+
+  --shadow-field: 0 0 10px rgb(10 6 4 / 0.45);
 }
 
 @theme inline {
-  --color-brand: var(--jg-brand);
-  --color-brand-foreground: var(--jg-brand-foreground);
-  --color-surface: var(--jg-surface);
-  --color-surface-2: var(--jg-surface-2);
+  --color-ink: var(--jg-ink);
+  --color-brand: var(--jg-accent);
+  --color-surface: var(--jg-surface-card);
+  --color-surface-raised: var(--jg-surface-raised);
+  --color-surface-dark: var(--jg-surface-dark);
+  --color-border-soft: var(--jg-border-soft);
+  --color-subtle: var(--jg-secondary);
+  --color-text-primary: var(--jg-text-primary);
+  --color-elevated: var(--jg-elevated);
+  --color-gray-light: var(--jg-gray-light);
   --color-success: var(--jg-success);
-  --color-warning: var(--jg-warning);
-  --color-danger: var(--jg-danger);
+  --color-coral: var(--jg-coral);
+  --color-danger: var(--jg-coral);
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -91,10 +120,11 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
 
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+  --radius-sm: calc(var(--radius) - 2px);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 4px);
+  --radius-xl: calc(var(--radius) + 8px);
+  --radius-art: 15px;
 }
 
 @layer base {

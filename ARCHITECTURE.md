@@ -35,7 +35,10 @@ File-based em `src/routes`; `src/routeTree.gen.ts` é gerado pelo plugin e **ver
 Playwright: `webServer = pnpm preview` (porta 4173) — **rode `pnpm build` antes de `pnpm test:e2e`**; projetos `chromium-desktop` (1440) e `chromium-mobile` (390).
 
 ### Tokens de design
-`src/index.css`: variáveis `--jg-*` em `:root` → mapeadas para as variáveis do shadcn → expostas no Tailwind via `@theme inline` (`bg-brand`, `bg-surface`, …). Fontes/breakpoints em `@theme`. **Valores provisórios**: `design/tokens.md` ainda não existe (ver Limitações).
+`src/index.css`: variáveis `--jg-*` em `:root` (valores do Figma) → mapeadas para as variáveis do shadcn → expostas no Tailwind via `@theme inline` (`bg-surface`, `bg-surface-dark`, `text-brand`, `text-subtle`, `rounded-art`, `max-w-content`, `shadow-field`…). Tabela completa e origem em `design/tokens.md`; tela → node-id em `design/frames.md`.
+- Tema único escuro (marrom/âmbar). `--accent` do shadcn = superfície de hover; a cor de destaque do Figma (`text-accent` #E89B55) é `text-brand`.
+- Fonte única Roboto Mono, self-host (`public/fonts/roboto-mono-latin-var.woff2`, variável 400–700, subset latin), `font-display: swap` + `<link rel="preload">`. Sem Google Fonts em runtime (teste em `e2e/layout.spec.ts`).
+- Assets do layout em `public/assets/` (ícones SVG, artes de NFT em webp 400/800).
 
 Cenário de mock: query param `?scenario=<nome>` (persistido na sessão) ou painel de dev (canto inferior, só com mocks ligados). Reset: `?reset=1` ou botão "Resetar cenário".
 Bootstrap: `await worker.start()` ANTES de criar o socket e renderizar a app (o MSW precisa ter substituído o `WebSocket` global antes do `socket.io-client` capturá-lo). Por isso a app inteira é carregada com `import('@/app/app')` **depois** do start — ver §5 "Limitações do binding".
@@ -235,8 +238,16 @@ Fixtures: ≥ 40 NFTs (filtros/paginação), 2 usuários (`ana@jungle.test` / `S
 TODO
 
 ## 11. Desvios do Figma e acessibilidade
-TODO
+- Marca do layout é **KURIO** (wordmark em texto, como no Figma); `<title>` = "Kurio — Marketplace de NFTs".
+- Layout base (`__root`): header e footer dentro do container de 1200px, como nos frames desktop. Header com divisor nas telas Início/Perfil/Carteiras/auth; sem divisor no fluxo "Mercado" (NFT, carrinho, checkout, pedido), onde "Mercado" fica ativo.
+- Itens sem funcionalidade no escopo **não fingem funcionar** (invariante 10): "Criadores"/"Aprenda" no header são texto `aria-disabled`; links do footer só existem para rotas reais (`/profile`, `/wallets`), o resto é texto; newsletter tem input e botão `disabled` com aviso "Indisponível nesta demonstração".
+- Busca (ícone do header) leva ao catálogo (`/#catalogo`), onde fica o campo de busca.
+- Badge do carrinho no header só aparece quando houver contagem real do carrinho — nada de número estático do Figma.
+- Abaixo de `lg` (1024) o header esconde a nav e mantém busca/carrinho/Entrar; o footer empilha colunas. O Figma mobile não tem footer e usa Tab Bar inferior (`70395:245`) — ver Limitações.
+- Ícones sociais do footer são imagens com `alt` (sem link: não há perfis reais).
 
 ## 12. Limitações conhecidas
-- `design/` (PNGs do Figma e `tokens.md`) ainda não foi criado. Tokens em `src/index.css` são provisórios e devem ser substituídos
+- Tab Bar mobile do Figma (`70395:245`) ainda não implementada; mobile usa header compacto + footer empilhado. Entra junto com favoritos/perfil.
+- Figma não tem mobile para Confirmação, Perfil e Carteiras: serão adaptados do desktop com os mesmos tokens.
+- Seed do mock ainda usa arte SVG generativa; as 4 artes do Figma (`public/assets/nft/`)
 - TODO: demais itens.

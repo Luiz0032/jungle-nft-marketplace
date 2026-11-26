@@ -1,34 +1,107 @@
-import { Link } from '@tanstack/react-router'
+import { Link, useRouterState } from '@tanstack/react-router'
+import { cn } from '@/lib/utils'
 
-const nav = [
-  { to: '/', label: 'Explorar' },
-  { to: '/cart', label: 'Carrinho' },
-  { to: '/login', label: 'Entrar' },
-] as const
+/**
+ * Header desktop/mobile — Figma "Header With Divider" (70522:3240) / "Header Row" (70486:560).
+ * "Mercado" fica ativo nas telas do fluxo de compra; "Criadores" e "Aprenda" estão fora do
+ * escopo do desafio e aparecem como indisponíveis (invariante 10).
+ */
+
+const MARKET_FLOW = /^\/(nft|cart|checkout|orders)(\/|$)/
+
+function useActiveSection(): 'home' | 'market' | null {
+  const pathname = useRouterState({ select: (s) => s.location.pathname })
+  if (MARKET_FLOW.test(pathname)) return 'market'
+  if (pathname === '/') return 'home'
+  return null
+}
+
+const navLink =
+  'relative block pb-[22px] text-base leading-none outline-none focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-ring'
+const activeLink =
+  'font-bold text-brand after:absolute after:inset-x-0 after:bottom-0 after:h-[3px] after:rounded-full after:bg-primary'
 
 export function SiteHeader() {
+  const active = useActiveSection()
+  const isMarket = active === 'market'
+
   return (
-    <header className="border-b border-border bg-surface">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4">
-        <Link to="/" className="text-lg font-bold">
-          Jungle<span className="text-brand"> NFT</span>
+    <header className="mx-auto w-full max-w-content px-4 pt-6 lg:px-0">
+      <div
+        className={cn(
+          'flex items-center justify-between gap-4 lg:items-start lg:gap-6',
+          // Telas do fluxo "Mercado" usam o Header Row sem divisor.
+          !isMarket && 'border-b-[0.6px] border-border',
+        )}
+      >
+        <Link
+          to="/"
+          className="flex h-[34px] shrink-0 lg:w-[160px] items-center text-sm font-bold tracking-[0.1em] text-foreground outline-none focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-ring lg:items-start lg:pt-2"
+          aria-label="Kurio — página inicial"
+        >
+          KURIO
         </Link>
-        <nav aria-label="Principal">
-          <ul className="flex gap-4 text-sm">
-            {nav.map((item) => (
-              <li key={item.to}>
-                <Link
-                  to={item.to}
-                  className="rounded-sm text-muted-foreground hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-                  activeProps={{ className: 'text-foreground', 'aria-current': 'page' }}
-                  activeOptions={{ exact: item.to === '/' }}
-                >
-                  {item.label}
-                </Link>
-              </li>
-            ))}
+
+        <nav aria-label="Principal" className="hidden lg:block">
+          <ul className="flex gap-10">
+            <li>
+              <Link
+                to="/"
+                className={cn(navLink, active === 'home' ? activeLink : 'font-normal text-foreground hover:text-brand')}
+                aria-current={active === 'home' ? 'page' : undefined}
+              >
+                Início
+              </Link>
+            </li>
+            <li>
+              <Link
+                to="/"
+                hash="catalogo"
+                className={cn(navLink, isMarket ? activeLink : 'font-normal text-foreground hover:text-brand')}
+                aria-current={isMarket ? 'page' : undefined}
+              >
+                Mercado
+              </Link>
+            </li>
+            <li>
+              <span className={cn(navLink, 'cursor-not-allowed text-foreground/60')} aria-disabled="true" title="Indisponível">
+                Criadores
+              </span>
+            </li>
+            <li>
+              <span className={cn(navLink, 'cursor-not-allowed text-foreground/60')} aria-disabled="true" title="Indisponível">
+                Aprenda
+              </span>
+            </li>
           </ul>
         </nav>
+
+        <div className="flex shrink-0 items-center gap-3 pb-[10px] lg:gap-7">
+          <Link
+            to="/"
+            hash="catalogo"
+            className="grid size-8 place-items-center rounded-md outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring"
+            aria-label="Buscar no catálogo"
+          >
+            <img src="/assets/icons/search.svg" alt="" width={20} height={20} />
+          </Link>
+          <Link
+            to="/cart"
+            className="grid size-8 place-items-center rounded-md outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring"
+            aria-label="Carrinho"
+            activeProps={{ 'aria-current': 'page' }}
+          >
+            {/* O badge com a contagem entra quando o carrinho existir; nada de número falso. */}
+            <img src="/assets/icons/cart.svg" alt="" width={24} height={24} />
+          </Link>
+          <Link
+            to="/login"
+            className="inline-flex h-[35px] items-center justify-center gap-1 rounded-md bg-primary px-3 text-base font-medium text-primary-foreground outline-none hover:bg-primary/90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background lg:w-[100px] lg:px-0"
+          >
+            <img src="/assets/icons/login.svg" alt="" width={18} height={17} className="m-px" />
+            Entrar
+          </Link>
+        </div>
       </div>
     </header>
   )
