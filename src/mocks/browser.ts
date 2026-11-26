@@ -5,6 +5,7 @@ import { handlers } from '@/mocks/handlers'
 import { resumePendingSettlements } from '@/mocks/handlers/order-engine'
 import { initScenarioFromUrl, resetScenario } from '@/mocks/scenarios'
 import { socketHandlers } from '@/mocks/socket'
+import { installWalletExtension } from '@/mocks/wallet-extension'
 
 export const worker = setupWorker(...handlers, ...socketHandlers)
 
@@ -26,4 +27,5 @@ export async function startMocks() {
   })
   // Só depois do worker ativo: `window.__mock` presente ⇒ requisições já são interceptadas.
   installMockControl()
+  installWalletExtension()
 }

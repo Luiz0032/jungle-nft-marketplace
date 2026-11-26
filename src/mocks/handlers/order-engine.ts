@@ -9,6 +9,22 @@ import { findEdition, updateEdition } from './domain'
  * (confirmed/rejected) em `resolveAt` — por timer, ou preguiçosamente na próxima requisição
  * (cobre refresh da página antes do timer disparar). Estado terminal nunca muda.
  */
+/**
+ * Pedido confirmado: tira do carrinho SÓ o que foi comprado (quantidade a quantidade). O que o usuário
+ * adicionou ou aumentou depois de enviar o pedido continua lá. Roda uma vez (settle só sai de `pending`).
+ */
+function removePurchasedFromCart(rec: OrderRecord) {
+  const cart = db().carts[rec.userId]
+  if (!cart) return
+  for (const bought of rec.reservations) {
+    const item = cart.items.find((i) => i.editionId === bought.editionId)
+    if (!item) continue
+    item.quantity -= bought.quantity
+  }
+  cart.items = cart.items.filter((i) => i.quantity > 0)
+  cart.version += 1
+}
+
 function settle(rec: OrderRecord) {
   if (rec.order.status !== 'pending') return
   if (rec.outcome === 'confirmed') {
@@ -19,6 +35,7 @@ function settle(rec: OrderRecord) {
       receipt: rec.snapshot,
       version: rec.order.version + 1,
     }
+    removePurchasedFromCart(rec)
   } else {
     for (const r of rec.reservations) {
       const found = findEdition(r.editionId)

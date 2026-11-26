@@ -94,19 +94,28 @@ export function CartSummary({ cart, blocked }: { cart: CartView; blocked: boolea
       </p>
 
       {cart.userId ? (
-        <>
-          <button
-            type="button"
-            disabled
-            aria-describedby="checkout-unavailable"
-            className="h-[50px] w-full cursor-not-allowed rounded-md bg-primary text-base font-bold text-primary-foreground opacity-60"
+        canCheckout ? (
+          <Link
+            to="/checkout"
+            className="grid h-[50px] w-full place-items-center rounded-md bg-primary text-base font-bold text-primary-foreground outline-none hover:bg-primary/90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
             Finalizar compra
-          </button>
-          <p id="checkout-unavailable" className="-mt-4 text-xs text-subtle">
-            {canCheckout ? 'O pagamento ainda não está disponível.' : 'Resolva os avisos do carrinho para continuar.'}
-          </p>
-        </>
+          </Link>
+        ) : (
+          <>
+            <button
+              type="button"
+              disabled
+              aria-describedby="checkout-blocked"
+              className="h-[50px] w-full cursor-not-allowed rounded-md bg-primary text-base font-bold text-primary-foreground opacity-60"
+            >
+              Finalizar compra
+            </button>
+            <p id="checkout-blocked" className="-mt-4 text-xs text-subtle">
+              {updating ? 'Atualizando valores…' : 'Resolva os avisos do carrinho para continuar.'}
+            </p>
+          </>
+        )
       ) : (
         <Link
           to="/login"

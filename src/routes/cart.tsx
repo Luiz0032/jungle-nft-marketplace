@@ -1,17 +1,14 @@
 import { useQuery } from '@tanstack/react-query'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { ShoppingCart } from 'lucide-react'
-import { useEffect, useRef } from 'react'
-import { useRealtime } from '@/app/realtime-context'
 import { Button } from '@/components/ui/button'
 import { CartLineRow } from '@/features/cart/components/cart-line'
 import { CartSummary } from '@/features/cart/components/cart-summary'
 import { guestCart } from '@/features/cart/guest-cart'
-import { useCart, useCartMutations, type CartLine } from '@/features/cart/queries'
+import { useLiveCartNotice } from '@/features/cart/hooks'
+import { useCart, useCartMutations } from '@/features/cart/queries'
 import { NftCard, NftCardSkeleton } from '@/features/catalog/components/nft-card'
 import { nftListQuery } from '@/features/catalog/queries'
-import { formatEth } from '@/lib/money'
-import { notify } from '@/lib/notify'
 
 /** Carrinho — Figma desktop 11:1278 (Top 70371:250 + Related 70371:239) / mobile 16:360. */
 export const Route = createFileRoute('/cart')({
@@ -93,35 +90,6 @@ function CartPage() {
 
       <Related excludeIds={cart.lines.map((l) => l.nftId)} />
     </div>
-  )
-}
-
-/**
- * Carrinho aberto + `nft.updated` de um NFT que está nele → toast + aria-live dizendo o que mudou.
- * O recálculo vem sozinho: o realtime já invalidou carrinho e cotação (e atualizou o detalhe do convidado).
- */
-function useLiveCartNotice(lines: CartLine[]) {
-  const realtime = useRealtime()
-  const latest = useRef(lines)
-  useEffect(() => {
-    latest.current = lines // último estado renderizado (antes do evento): base para dizer o que mudou
-  })
-
-  useEffect(
-    () =>
-      realtime.subscribe((e) => {
-        if (e.type !== 'nft.updated') return
-        const { nftId, editionId, price, available } = e.payload
-        const affected = latest.current.filter((l) => l.nftId === nftId && (!editionId || l.editionId === editionId))
-        for (const line of affected) {
-          const parts: string[] = []
-          if (price !== undefined && price !== line.unitPrice) parts.push(`preço agora ${formatEth(price)}`)
-          if (available !== undefined && available !== line.available)
-            parts.push(available === 0 ? 'esgotada' : `estoque agora ${available} ${available === 1 ? 'unidade' : 'unidades'}`)
-          if (parts.length > 0) notify.info(`${line.title} (${line.editionLabel}): ${parts.join(', ')}. Resumo recalculado.`)
-        }
-      }),
-    [realtime],
   )
 }
 

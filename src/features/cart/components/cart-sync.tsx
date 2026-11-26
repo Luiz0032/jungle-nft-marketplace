@@ -2,6 +2,8 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useEffect, useRef } from 'react'
 import { useAuth, useCurrentUser } from '@/features/auth/hooks'
 import { couponStore } from '@/features/quote/coupon'
+import { walletConnection } from '@/features/wallets/connection'
+import { attempts } from '@/lib/idempotency'
 import { notify } from '@/lib/notify'
 import { queryKeys } from '@/lib/query-keys'
 import { mergeCart } from '../api'
@@ -25,6 +27,8 @@ export function CartSync() {
     if (lastUser.current === userId) return
     lastUser.current = userId
     couponStore.forget()
+    attempts.forget()
+    walletConnection.forget()
     guestCart.setMerge('idle')
   }, [userId])
 

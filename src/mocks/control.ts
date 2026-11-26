@@ -1,5 +1,5 @@
 import type { Edition, RealtimeEvent } from '@/contracts'
-import { persist, resetDb } from '@/mocks/db'
+import { db, persist, resetDb } from '@/mocks/db'
 import { updateEdition } from '@/mocks/handlers/domain'
 import { getScenario, resetScenario, SCENARIOS, setScenario, type ScenarioName } from '@/mocks/scenarios'
 import { dropConnections, emitRaw, resetSocketServer, socketStats, type EmitInput } from '@/mocks/socket'
@@ -21,6 +21,8 @@ export type MockControl = {
   /** Derruba conexões e recusa reconexão por `outageMs` (padrão 3 s). */
   dropSockets: (opts?: { userId?: string; outageMs?: number }) => void
   socket: () => ReturnType<typeof socketStats>
+  /** Pedidos no banco (para provar idempotência: N cliques/tentativas → 1 pedido). */
+  orders: () => { id: string; userId: string; status: string; idempotencyKey: string }[]
 }
 
 declare global {
@@ -46,5 +48,12 @@ export function installMockControl() {
     emit: emitRaw,
     dropSockets: ({ userId, outageMs = 3_000 } = {}) => dropConnections({ userId, outageMs }),
     socket: socketStats,
+    orders: () =>
+      Object.values(db().orders).map((o) => ({
+        id: o.order.id,
+        userId: o.userId,
+        status: o.order.status,
+        idempotencyKey: o.idempotencyKey,
+      })),
   }
 }

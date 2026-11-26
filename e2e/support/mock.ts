@@ -16,6 +16,7 @@ type MockControl = {
   emit: (event: EmitInput) => RealtimeEvent
   dropSockets: (opts?: { userId?: string; outageMs?: number }) => void
   socket: () => { connections: { id: string; userId: string | null }[]; emitted: RealtimeEvent[] }
+  orders: () => { id: string; userId: string; status: string; idempotencyKey: string }[]
 }
 declare global {
   interface Window {

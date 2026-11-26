@@ -124,7 +124,11 @@ export function createRealtime({
       })
     }
     // Recibo e dados completos vêm do REST.
-    if (isTerminal(e.payload.status)) void queryClient.invalidateQueries({ queryKey: key })
+    if (isTerminal(e.payload.status)) {
+      void queryClient.invalidateQueries({ queryKey: key })
+      // Confirmado: o servidor tirou do carrinho os itens comprados.
+      if (e.payload.status === 'confirmed') void queryClient.invalidateQueries({ queryKey: queryKeys.cart(userId) })
+    }
     return true
   }
 
