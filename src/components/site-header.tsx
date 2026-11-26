@@ -99,7 +99,7 @@ export function SiteHeader({ className }: { className?: string }) {
             aria-label="Carrinho"
             activeProps={{ 'aria-current': 'page' }}
           >
-            {/* O badge com a contagem entra quando o carrinho existir; nada de número falso. */}
+            {/* O badge com a contagem entra quando o carrinho existir quando o carrinho existir; nada de número falso. */}
             <img src="/assets/icons/cart.svg" alt="" width={24} height={24} />
           </Link>
           <AccountActions />
