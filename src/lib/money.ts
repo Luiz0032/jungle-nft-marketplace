@@ -25,6 +25,19 @@ export function toEth(v: BigLike): Eth {
 
 export const isEth = (v: string): v is Eth => ETH_REGEX.test(v)
 
+/**
+ * Valor digitado/arrastado (ex.: `<input type=range>`, que pode devolver `0.018000000000000002`)
+ * → Eth com `dp` casas. Inválido ou negativo → `null`.
+ */
+export function parseEthInput(v: string, dp = 2): Eth | null {
+  try {
+    const b = new Big(v.trim())
+    return b.lt(0) ? null : toEth(b.round(dp, Big.roundHalfUp))
+  } catch {
+    return null
+  }
+}
+
 export function add(...values: BigLike[]): Eth {
   return toEth(values.reduce<Big>((acc, v) => acc.plus(big(v)), new Big(0)))
 }

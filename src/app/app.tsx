@@ -2,6 +2,7 @@ import { QueryClientProvider } from '@tanstack/react-query'
 import { RouterProvider } from '@tanstack/react-router'
 import { useEffect } from 'react'
 import { createQueryClient } from '@/app/query-client'
+import { RealtimeContext } from '@/app/realtime-context'
 import { createAppRouter } from '@/app/router'
 import { AuthContext } from '@/features/auth/hooks'
 import { createAuth } from '@/features/auth/session'
@@ -22,28 +23,19 @@ function createAppServices() {
   getUserId = auth.userId
   const router = createAppRouter(queryClient, auth)
 
-  auth.setExpiredHandler(() => {
-    notify.info('Sua sessão expirou. Entre novamente para continuar.')
-    // Em rota protegida, volta ao login guardando o destino; em rota pública, só avisa.
-    if (router.state.matches.some((m) => m.routeId === '/_auth')) {
-      void router.navigate({
-        to: '/login',
-        search: { redirect: router.state.location.href, reason: 'expired' },
-        replace: true,
-      })
-    }
-  })
+  // O redirecionamento em rota protegida fica com o layout `_auth` (reage a qualquer perda de sessão).
+  auth.setExpiredHandler(() => notify.info('Sua sessão expirou. Entre novamente para continuar.'))
 
   onSocketChange((socket) => realtime.attach(socket))
   auth.install()
-  return { queryClient, auth, router }
+  return { queryClient, auth, router, realtime }
 }
 
 let services: ReturnType<typeof createAppServices> | undefined
 const getServices = () => (services ??= createAppServices())
 
 export function App() {
-  const { queryClient, auth, router } = getServices()
+  const { queryClient, auth, router, realtime } = getServices()
 
   // Refresh: confirma a sessão salva com GET /auth/session (rotas protegidas também aguardam isso).
   useEffect(() => {
@@ -52,9 +44,11 @@ export function App() {
 
   return (
     <AuthContext value={auth}>
-      <QueryClientProvider client={queryClient}>
-        <RouterProvider router={router} />
-      </QueryClientProvider>
+      <RealtimeContext value={realtime}>
+        <QueryClientProvider client={queryClient}>
+          <RouterProvider router={router} />
+        </QueryClientProvider>
+      </RealtimeContext>
     </AuthContext>
   )
 }

@@ -10,6 +10,13 @@ async function enableMocking() {
   await startMocks()
 }
 
+// Após um deploy, uma aba antiga pede chunks com hash que não existem mais (o rewrite do SPA devolve HTML).
+// Recarregar busca o index novo; a URL (com filtros) é preservada.
+window.addEventListener('vite:preloadError', (event) => {
+  event.preventDefault()
+  window.location.reload()
+})
+
 async function bootstrap() {
   await enableMocking()
   // Import dinâmico de propósito: o engine.io-client captura `globalThis.WebSocket` quando o módulo é

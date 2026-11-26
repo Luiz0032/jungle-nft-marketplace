@@ -99,6 +99,8 @@ export function createAuth({ queryClient, realtime }: { queryClient: QueryClient
       }
     },
     token: currentToken,
+    /** A sessão atual de convidado começou por expiração (não por logout)? */
+    endedByExpiry: () => expiredFlag,
     userId: (): string | null => (state.status === 'authenticated' ? state.session.user.id : null),
 
     /** Sessão utilizável. Só vai ao servidor se ainda não foi validada; chamadas simultâneas compartilham a requisição. */

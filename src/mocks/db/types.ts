@@ -63,7 +63,7 @@ export type OrderRecord = {
 export type CouponRecord = { code: string; percent: number; expiresAt: string }
 
 export type DbState = {
-  schemaVersion: 1
+  schemaVersion: 2
   seq: number
   users: UserRecord[]
   sessions: SessionRecord[]

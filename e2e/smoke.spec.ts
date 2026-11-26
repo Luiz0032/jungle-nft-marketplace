@@ -3,7 +3,8 @@ import { expect, test } from '@playwright/test'
 test.describe('smoke @smoke', () => {
   test('home renderiza com o worker MSW ativo', async ({ page }) => {
     await page.goto('/')
-    await expect(page.getByRole('heading', { level: 1, name: 'Explorar NFTs' })).toBeVisible()
+    await expect(page.getByRole('heading', { level: 2, name: 'Explorar NFTs' })).toBeAttached()
+    await expect(page.getByRole('heading', { level: 1, name: /seja dono/i })).toBeVisible()
 
     // O worker só é registrado se VITE_ENABLE_MOCKS != 'false' e intercepta /api.
     const health = await page.evaluate(async () => {

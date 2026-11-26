@@ -71,6 +71,10 @@ URL de um node: `https://www.figma.com/design/pJtZ1Ne6GsguDac7Yaij8V/?node-id=<i
 | Paginação | `70342:2825` · 207 × 35 | |
 | Modal (auth) | `70381:239` · 500 × 600 | header 140, faixa decorativa 500 × 10, botão fechar `9:947` 18 × 18 |
 
+## Referências visuais salvas
+
+- `design/screens/home-desktop.png` — export 1440×3668 da Home desktop (`2:2`), referência visual da Home.
+
 ## Assets baixados
 
 Ver `public/assets/` — tabela com dimensões em `design/tokens.md#assets`.

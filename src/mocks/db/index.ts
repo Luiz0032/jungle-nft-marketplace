@@ -11,7 +11,7 @@ function load(): DbState | null {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return null
     const parsed = JSON.parse(raw) as DbState
-    return parsed.schemaVersion === 1 ? parsed : null
+    return parsed.schemaVersion === 2 ? parsed : null
   } catch {
     return null
   }

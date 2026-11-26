@@ -106,9 +106,9 @@ Em `public/assets/`. Artes de NFT 1254 × 1254 no Figma → webp em duas largura
 
 | Arquivo | Dimensões | Peso | Origem |
 |---|---|---|---|
-| `nft/emerald-ape-{400,800}.webp` | 400², 800² | 11 / 37 KB | Emerald Ape #042 |
-| `nft/sage-nomad-{400,800}.webp` | 400², 800² | 11 / 33 KB | Sage Nomad #009 |
-| `nft/neon-vessel-{400,800}.webp` | 400², 800² | 14 / 38 KB | Neon Vessel #552 |
+| `nft/emerald-ape-{400,800}.webp` | 400², 800² | 14 / 38 KB | Emerald Ape #042 |
+| `nft/sage-nomad-{400,800}.webp` | 400², 800² | 11 / 37 KB | Sage Nomad #009 |
+| `nft/neon-vessel-{400,800}.webp` | 400², 800² | 11 / 33 KB | Neon Vessel #552 |
 | `nft/golden-beat-{400,800}.webp` | 400², 800² | 14 / 47 KB | Golden Beat #207 |
 | `icons/search.svg` | 20 × 20 | 1 KB | header |
 | `icons/cart.svg` | 24 × 24 | 1.4 KB | header |

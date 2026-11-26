@@ -123,6 +123,7 @@ test.describe('auth @auth', () => {
 
   test('logout limpa sessão, storage privado e socket', async ({ page }) => {
     await login(page, ANA, '/profile')
+    await expect(page.getByTestId('profile-email')).toHaveText(ANA.email)
     await page.evaluate(() => {
       localStorage.setItem('jg:user:usr-ana:checkout-draft', '{"x":1}')
       sessionStorage.setItem('jg:user:usr-ana:idem', 'k')

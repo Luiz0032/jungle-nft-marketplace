@@ -80,7 +80,8 @@ type User = { id: string; name: string; email: string; avatarUrl: string | null 
 ```
 
 ### NFTs
-| GET | `/nfts` | `q, collection[], category[], minPrice, maxPrice, sort (price_asc|price_desc|newest|popular), page, pageSize` | `Page<NftSummary>` |
+| GET | `/nfts` | `q, collection[], category[], minPrice, maxPrice, highlight (new|trending), sort (price_asc|price_desc|newest|popular), page, pageSize` | `Page<NftSummary>` |
+| GET | `/catalog/facets` | — | `CatalogFacets` |
 | GET | `/nfts/:id` | — | `NftDetail` · 404 |
 
 ```ts
@@ -89,6 +90,8 @@ type NftSummary = { id; title; collection; image; price: Eth; available: number;
 type NftDetail = NftSummary & { description; images: string[]; creator; editions: Edition[] }
 type Edition = { id; label; price: Eth; available: number; version: number }
 ```
+
+`highlight` são as abas do Figma "Novos lançamentos"/"Em alta" como **recorte**, independente da ordenação: `new` = cunhados nos últimos `NEW_RELEASE_DAYS` (60) dias contados do mais recente; `trending` = popularidade ≥ `TRENDING_MIN_POPULARITY` (600). `CatalogFacets` = `{ collections: {slug,name,count}[], categories: {slug,name,count}[], priceRange: {min: Eth, max: Eth} }`; `count` é do catálogo inteiro (não reage aos filtros).
 
 ### Favoritos (auth)
 `GET /favorites` → `{ nftIds: string[] }` · `PUT /favorites/:nftId` → 204 · `DELETE /favorites/:nftId` → 204
@@ -224,6 +227,16 @@ TODO: convidado em `localStorage`; logado no servidor mock; merge no login; atua
 Mutações: retry 0, exceto `POST /orders` (retry manual com a MESMA idempotency key).
 Otimista: favoritos (toggle) e quantidade do carrinho, com rollback + toast em erro.
 
+**Catálogo:** a URL é a fonte da verdade (`validateSearch` com `CatalogSearchSchema`; valores inválidos caem no padrão com `.catch`). Padrões não vão para a URL (`cleanSearch`); toda mudança de filtro/busca/ordem/recorte passa por `withFilters` e zera `page`. `toListQuery` monta a query da API com padrões explícitos (chave de cache estável) e `pageSize` 9 (grade 3×3 do Figma). A busca confirma com debounce de 350 ms (uma entrada de histórico por busca, não por tecla). O `loader` da rota só faz `prefetchQuery` (não bloqueia a navegação). Respostas fora de ordem: cada busca tem a sua chave, a tela só lê a chave atual e o TanStack Query aborta (via `signal` no Axios) a busca que perdeu o observador — testado com o cenário `out-of-order`.
+
+**Favoritos:** `['user', userId, 'favorites']`. Toggle otimista: `cancelQueries` → snapshot → `setQueryData`; erro → volta o snapshot (sem snapshot, `resetQueries`, porque `setQueryData(key, undefined)` não faz nada) + toast/aria-live; sempre `invalidateQueries` no fim. O coração fica desabilitado até a lista do usuário chegar (alternar partindo de estado desconhecido gerava rollback errado). Convidado → `/login?redirect=<página atual>`.
+
+**Detalhe:** a quantidade é inteira e presa a `[1, estoque da edição]`; se `nft.updated` baixa o estoque abaixo do escolhido, a quantidade exibida acompanha e o aviso diz o que mudou (preço e/ou estoque, comparando com o último estado renderizado).
+
+**Rotas protegidas:** além do `beforeLoad`, o layout `_auth` reage a qualquer perda de sessão já dentro da rota (logout, expiração, corrida "Sair" antes da navegação pós-login terminar): não renderiza nada privado e vai uma vez para `/login?redirect=<rota>` (`reason=expired` se foi expiração).
+
+**Deploy:** `vite:preloadError` recarrega a página (aba aberta antes de um deploy pede chunks que não existem mais).
+
 ## 9. Cenários de mock
 | Cenário | Efeito |
 |---|---|
@@ -248,6 +261,15 @@ Fixtures: ≥ 40 NFTs (filtros/paginação), 2 usuários (`ana@jungle.test` / `S
 TODO
 
 ## 11. Desvios do Figma e acessibilidade
+- **Home/Detalhe:** artes de NFT do Figma em rodízio no seed (4 imagens para 48 NFTs, 3 por NFT). Coleções e nomes vêm do mock, não dos textos do Figma.
+- Busca: no desktop o Figma só tem o ícone no header; o campo fica no topo da sidebar de filtros (mesmo estilo do campo mobile "Explorar coleções"). O ícone do header leva ao catálogo.
+- Filtros: o bloco "Coleções" do Figma lista as **categorias** do contrato; o bloco "Rede" (o contrato não tem rede) lista as **coleções**. Contagens são reais (facetas). O slider de faixa de preço é feito com dois `<input type=range>` (teclado e leitor de tela nativos) + "Aplicar".
+- Abas "Todos os NFTs / Novos lançamentos / Em alta" = recorte `highlight`; "Ordenar por" é um `<select>` nativo estilizado.
+- Card: selo "RARO" (≤ 3 unidades) e "ESGOTADO" (0) com dado real; preço riscado do Figma omitido (não há preço anterior no contrato). Coração sempre visível (o Figma mostra ações só no hover desktop; aqui é acessível por toque/teclado). Ícone de carrinho no card ainda não implementado.
+- Hero: slide único; os 3 pontos do carrossel são decorativos (`aria-hidden`), sem fingir navegação.
+- "Diário da Cunhagem": conteúdo editorial estático; "Ler mais" indisponível (não há artigos no escopo).
+- Detalhe: estrelas/"19 avaliações" e a aba "Avaliações" omitidas (não há avaliações no contrato — não inventamos dado). "Atributos", "Rede", "Contrato" e "Royalties" trocados por dados reais (criador, edições, estoque total). Pílulas de edição mostram o rótulo da edição (Padrão/Rara/Lendária). "COMPRAR"/"Comprar NFT" e o carrinho ficam desabilitados com aviso enquanto o carrinho não existe. "Compartilhar" copia o link.
+- Mobile: header compacto continua visível (a Tab Bar do Figma não foi implementada); barra de compra fixa no detalhe como no Figma, com respiro no fim da página.
 - **Login/Cadastro:** no desktop o Figma mostra o modal sobre a Home com scrim; como a Home ainda é placeholder, `/login` e `/register` são rotas com o cartão de 500px (mesmas medidas do modal: raio 8, faixa primary de 10px, X que volta ao início) sobre o fundo `ink`, sem scrim. Abas "Entrar | Criar conta" são links que preservam `redirect`. No mobile (< lg) header e footer somem, como no Figma.
 - Inputs do Figma usam só placeholder: o `<label>` existe e está associado (`sr-only`); erros ficam abaixo do campo (`aria-describedby`, `aria-invalid`, borda coral). Mostrar/ocultar senha usa `EyeOff`/`Eye` do lucide (o Figma só desenha o estado "oculto"); também na confirmação de senha.
 - Botão principal do cadastro: "Criar perfil" no mobile e "Criar conta" no desktop, como nos frames.
@@ -266,8 +288,8 @@ TODO
 
 ## 12. Limitações conhecidas
 - Sessão não é sincronizada entre abas: logout/login em outra aba não atualiza esta até a próxima chamada privada (401) ou refresh. Não há vazamento: cada aba só usa o próprio token em memória.
+- **Referência visual parcial.** A Home foi feita a partir do export em resolução total (`design/screens/home-desktop.png`, 1440×3668) e dos screenshots já obtidos; o Detalhe do NFT (desktop e mobile), a partir do XML de metadata (geometria e textos de todos os nós), **sem referência visual** — cores, raios e tipografia seguem os tokens. Revisar a fidelidade do Detalhe contra o Figma.
 - Perfil (`/profile`) é só leitura (nome, e-mail) para validar o isolamento por usuário; edição, avatar e senha ainda não implementados.
 - Tab Bar mobile do Figma (`70395:245`) ainda não implementada; mobile usa header compacto + footer empilhado. Entra junto com favoritos/perfil.
 - Figma não tem mobile para Confirmação, Perfil e Carteiras: serão adaptados do desktop com os mesmos tokens.
-- Seed do mock ainda usa arte SVG generativa; as 4 artes do Figma (`public/assets/nft/`)
 - TODO: demais itens.

@@ -51,11 +51,3 @@ export const EDITION_TIERS = [
   { suffix: 'leg', label: 'Edição Lendária', multiplier: 6, stock: [0, 2] },
 ] as const
 
-export const PALETTES = [
-  ['#7c3aed', '#22d3ee'],
-  ['#f97316', '#facc15'],
-  ['#10b981', '#0ea5e9'],
-  ['#ec4899', '#8b5cf6'],
-  ['#14b8a6', '#84cc16'],
-  ['#ef4444', '#f59e0b'],
-] as const

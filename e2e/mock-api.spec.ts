@@ -221,6 +221,9 @@ test.describe('API mock @api', () => {
   })
 
   test('cenários: flaky é reproduzível e ?scenario seleciona pela URL', async ({ page }) => {
+    // Página sem chamadas de fundo (a Home busca catálogo/facetas e faz retry): o contador do PRNG fica só nosso.
+    await page.goto('/login')
+    await page.waitForFunction(() => window.__mock !== undefined)
     const run = async () => {
       await page.evaluate(() => window.__mock!.setScenario('flaky'))
       const statuses: number[] = []

@@ -3,7 +3,6 @@ import { authHandlers } from './auth'
 import { cartHandlers } from './cart'
 import { catalogHandlers } from './catalog'
 import { favoritesHandlers } from './favorites'
-import { imageHandlers } from './images'
 import { ordersHandlers } from './orders'
 import { profileHandlers, walletHandlers } from './profile'
 import { quoteHandlers } from './quote'
@@ -19,5 +18,4 @@ export const handlers = [
   ...ordersHandlers,
   ...profileHandlers,
   ...walletHandlers,
-  ...imageHandlers,
 ]

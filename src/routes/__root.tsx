@@ -7,6 +7,7 @@ import { SiteFooter } from '@/components/site-footer'
 import { SiteHeader } from '@/components/site-header'
 import type { Auth } from '@/features/auth/session'
 import { LIVE_REGION_ID } from '@/lib/notify'
+import { cn } from '@/lib/utils'
 
 export type RouterContext = { queryClient: QueryClient; auth: Auth }
 
@@ -34,7 +35,10 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 const AUTH_SCREENS = /^\/(login|register)\/?$/
 
 function RootLayout() {
-  const authScreen = useRouterState({ select: (s) => AUTH_SCREENS.test(s.location.pathname) })
+  const pathname = useRouterState({ select: (s) => s.location.pathname })
+  const authScreen = AUTH_SCREENS.test(pathname)
+  // Detalhe do NFT no mobile tem barra de compra fixa (Figma "Buy Bar"): reserva espaço no fim da página.
+  const buyBar = pathname.startsWith('/nft/')
   return (
     <>
       <a
@@ -43,7 +47,7 @@ function RootLayout() {
       >
         Pular para o conteúdo
       </a>
-      <div className="flex min-h-dvh flex-col">
+      <div className={cn('flex min-h-dvh flex-col', buyBar && 'max-lg:pb-[190px]')}>
         <SiteHeader className={authScreen ? 'max-lg:hidden' : undefined} />
         <main id="conteudo" tabIndex={-1} className="mx-auto w-full max-w-content flex-1 px-4 outline-none lg:px-0">
           <Outlet />

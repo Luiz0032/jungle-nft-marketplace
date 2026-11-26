@@ -20,7 +20,10 @@ export const SEED_USERS = [
   { id: 'usr-bruno', name: 'Bruno Lima', email: 'bruno@jungle.test', password: 'Senha@123', salt: 'seed-salt-bruno' },
 ] as const
 
-export const imageUrl = (nftId: string, index: number) => `/mock-images/${nftId}-${index}.svg`
+/** Artes do Figma (public/assets/nft, webp 400/800). Cada NFT usa 3 delas em rodízio. */
+const ARTWORKS = ['emerald-ape', 'sage-nomad', 'neon-vessel', 'golden-beat'] as const
+export const imageUrl = (nftIndex: number, k: number) =>
+  `/assets/nft/${ARTWORKS[(nftIndex + k) % ARTWORKS.length]}-800.webp`
 
 function buildNfts(): NftRecord[] {
   const rng = createRng(SEED)
@@ -47,7 +50,7 @@ function buildNfts(): NftRecord[] {
       // A maioria segue a categoria da coleção; ~1/4 varia para os filtros combinarem de forma interessante.
       category: rng.next() < 0.25 ? rng.pick(['arte', 'games', 'musica', 'fotografia', 'colecionaveis'] as const) : collection.category,
       description: `${title} faz parte da coleção ${collection.name}. Peça digital única, cunhada para colecionadores da selva.`,
-      images: [0, 1, 2].map((k) => imageUrl(id, k)),
+      images: [0, 1, 2].map((k) => imageUrl(i, k)),
       creator: { name: rng.pick(CREATORS), address: `0x${rng.hex(40)}` },
       editions,
       version: 1,
@@ -73,7 +76,7 @@ async function buildUsers(): Promise<UserRecord[]> {
 export async function createSeed(): Promise<DbState> {
   const rng = createRng(SEED + 1)
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     seq: 0,
     users: await buildUsers(),
     sessions: [],
