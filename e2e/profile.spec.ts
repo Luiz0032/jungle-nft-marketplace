@@ -178,12 +178,12 @@ test.describe('carteiras @profile', () => {
     const renamed = rows(page).filter({ hasText: 'Polygon de jogos' })
     await expect(renamed.getByRole('button', { name: 'Editar nome de Polygon de jogos' })).toBeFocused()
 
-    await renamed.getByRole('button', { name: 'Tornar Polygon de jogos primária' }).click()
+    await renamed.getByRole('button', { name: 'Tornar primária (Polygon de jogos)' }).click()
     await expect(live(page)).toContainText('agora é a carteira primária')
     await expect(primaryRows(page)).toHaveCount(1)
     await expect(primaryRows(page).getByTestId('wallet-label')).toHaveText('Polygon de jogos')
     // a primária não oferece "tornar primária" (não dá para ficar sem nenhuma)
-    await expect(renamed.getByRole('button', { name: /^Tornar/ })).toHaveCount(0)
+    await expect(renamed.getByRole('button', { name: /^Tornar primária/ })).toHaveCount(0)
 
     await page.reload()
     await expect(primaryRows(page).getByTestId('wallet-label')).toHaveText('Polygon de jogos')

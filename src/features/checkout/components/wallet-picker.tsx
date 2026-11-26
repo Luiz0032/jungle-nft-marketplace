@@ -1,6 +1,6 @@
 import { Link } from '@tanstack/react-router'
 import { CheckCircle2, Unplug, Wallet as WalletIcon } from 'lucide-react'
-import { useId, useState } from 'react'
+import { useId, useRef, useState } from 'react'
 import { NETWORKS, type Network, type Wallet } from '@/contracts'
 import { walletConnection, WalletConnectError, type Connection } from '@/features/wallets/connection'
 import { NETWORK_LABEL, shortAddress } from '@/features/wallets/queries'
@@ -35,6 +35,7 @@ export function WalletPicker({
 }) {
   const id = useId()
   const [connecting, setConnecting] = useState(false)
+  const statusRef = useRef<HTMLDivElement>(null)
   const [connectError, setConnectError] = useState<string | null>(null)
   const inNetwork = wallets.filter((w) => w.network === network)
   const selected = inNetwork.find((w) => w.id === walletId) ?? null
@@ -53,6 +54,9 @@ export function WalletPicker({
       notify.error(message)
     } finally {
       setConnecting(false)
+      // O botão fica desabilitado enquanto o popup está aberto (ou some ao conectar): devolve o foco
+      // à ação que estiver no cartão ("Desconectar" ou "Conectar carteira") em vez de deixá-lo no body.
+      requestAnimationFrame(() => statusRef.current?.querySelector<HTMLButtonElement>('button')?.focus())
     }
   }
 
@@ -113,7 +117,7 @@ export function WalletPicker({
       </fieldset>
 
       {selected && (
-        <div className="flex flex-col gap-2 rounded-[10px] bg-surface p-4" aria-live="polite">
+        <div ref={statusRef} className="flex flex-col gap-2 rounded-[10px] bg-surface p-4" aria-live="polite">
           <p className="text-[9px] font-bold tracking-[0.1px] text-subtle">METAMASK • WALLETCONNECT • COINBASE</p>
           {connected ? (
             <div className="flex flex-wrap items-center justify-between gap-3">

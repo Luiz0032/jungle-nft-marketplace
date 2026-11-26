@@ -299,7 +299,7 @@ function PasswordForm() {
 
 function ProfileSkeleton() {
   return (
-    <div className="grid gap-6 lg:grid-cols-[380px_1fr]" aria-busy="true" aria-label="Carregando perfil">
+    <div className="grid gap-6 lg:grid-cols-[380px_1fr]" role="status" aria-busy="true" aria-label="Carregando perfil">
       <div className="shimmer h-[212px] rounded-[10px]" />
       <div className="flex flex-col gap-6">
         <div className="shimmer h-[196px] rounded-[10px]" />

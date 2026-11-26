@@ -58,7 +58,7 @@ function WalletsPage() {
             Minhas carteiras
           </h2>
           {wallets.isPending ? (
-            <div className="flex flex-col gap-3" aria-label="Carregando carteiras">
+            <div className="flex flex-col gap-3" role="status" aria-label="Carregando carteiras">
               {[0, 1].map((i) => (
                 <div key={i} className="shimmer h-[92px] rounded-md" />
               ))}
@@ -166,10 +166,9 @@ function WalletRow({ userId, wallet }: { userId: string; wallet: Wallet }) {
               type="button"
               onClick={() => setEditing(true)}
               className={`${outlineButtonClass} h-9 px-3`}
-              aria-label={`Editar nome de ${wallet.label}`}
             >
               <Pencil className="size-4" aria-hidden />
-              Editar
+              Editar<span className="sr-only"> nome de {wallet.label}</span>
             </button>
             {!wallet.primary && (
               <button
@@ -177,10 +176,9 @@ function WalletRow({ userId, wallet }: { userId: string; wallet: Wallet }) {
                 onClick={() => void makePrimary()}
                 disabled={update.isPending}
                 className={`${outlineButtonClass} h-9 px-3`}
-                aria-label={`Tornar ${wallet.label} primária`}
               >
                 {update.isPending && <Loader2 className="size-4 animate-spin motion-reduce:animate-none" aria-hidden />}
-                Tornar primária
+                Tornar primária<span className="sr-only"> ({wallet.label})</span>
               </button>
             )}
           </div>

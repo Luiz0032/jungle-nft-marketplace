@@ -112,7 +112,7 @@ function EmptyCart() {
 
 function CartSkeleton() {
   return (
-    <div className="flex flex-col gap-8 lg:flex-row lg:gap-12" aria-busy="true" aria-label="Carregando carrinho">
+    <div className="flex flex-col gap-8 lg:flex-row lg:gap-12" role="status" aria-busy="true" aria-label="Carregando carrinho">
       <div className="flex flex-1 flex-col gap-5">
         {Array.from({ length: 2 }, (_, i) => (
           <div key={i} className="flex gap-4">

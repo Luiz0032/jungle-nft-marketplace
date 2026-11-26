@@ -216,7 +216,7 @@ function Confirmed({ order }: { order: Order }) {
 
 function OrderSkeleton() {
   return (
-    <div className="flex justify-center py-12" aria-busy="true" aria-label="Carregando pedido">
+    <div className="flex justify-center py-12" role="status" aria-busy="true" aria-label="Carregando pedido">
       <div className="shimmer h-[480px] w-full max-w-[578px] rounded-lg" />
     </div>
   )

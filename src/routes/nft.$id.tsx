@@ -298,7 +298,7 @@ function Related({ nft }: { nft: NftDetail }) {
 
 function DetailSkeleton() {
   return (
-    <div className="flex flex-col gap-8 py-8 lg:flex-row" aria-busy="true" aria-label="Carregando NFT">
+    <div className="flex flex-col gap-8 py-8 lg:flex-row" role="status" aria-busy="true" aria-label="Carregando NFT">
       <div className="shimmer aspect-square w-full rounded-[20px] lg:size-[444px] lg:shrink-0 lg:ml-32" />
       <div className="flex flex-1 flex-col gap-4">
         <div className="shimmer h-4 w-32 rounded-sm" />

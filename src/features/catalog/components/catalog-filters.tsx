@@ -122,7 +122,7 @@ export function SearchField({ value, onCommit }: { value: string; onCommit: (q: 
       <label htmlFor={id} className="sr-only">
         Buscar NFTs
       </label>
-      <div className="flex h-[45px] items-center gap-3 rounded-[10px] bg-surface-dark px-3 shadow-field">
+      <div className="flex h-[45px] items-center gap-3 rounded-[10px] bg-surface-dark px-3 shadow-field focus-within:ring-2 focus-within:ring-ring">
         <Search className="size-5 shrink-0 text-subtle" aria-hidden />
         <input
           id={id}

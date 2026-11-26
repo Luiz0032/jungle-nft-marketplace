@@ -48,7 +48,7 @@ export function CartSummary({ cart, blocked }: { cart: CartView; blocked: boolea
       <CouponForm scope={cart.scope} items={items} applied={coupon} disabled={items.length === 0} />
 
       {quote.isPending ? (
-        <div className="flex flex-col gap-3" aria-label="Calculando resumo">
+        <div className="flex flex-col gap-3" role="status" aria-label="Calculando resumo">
           {Array.from({ length: 4 }, (_, i) => (
             <div key={i} className="shimmer h-5 w-full rounded-sm" />
           ))}

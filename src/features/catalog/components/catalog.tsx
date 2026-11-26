@@ -48,7 +48,7 @@ export function Catalog({ search, onChange }: { search: CatalogSearch; onChange:
   return (
     <div className="flex min-w-0 flex-col gap-8">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <nav aria-label="Recortes do catálogo" className="-mx-1 overflow-x-auto [scrollbar-width:none]">
+        <nav aria-label="Recortes do catálogo" className="-mx-1 min-w-0 overflow-x-auto [scrollbar-width:none]">
           <ul className="flex gap-4 px-1 whitespace-nowrap md:gap-5">
             {TABS.map((t) => {
               const active = search.highlight === t.highlight
@@ -73,7 +73,7 @@ export function Catalog({ search, onChange }: { search: CatalogSearch; onChange:
             })}
           </ul>
         </nav>
-        <div className="flex items-center gap-2 text-sm md:text-base">
+        <div className="flex shrink-0 items-center gap-2 text-sm md:text-base">
           <label htmlFor={sortId} className="shrink-0 text-foreground">
             Ordenar por:
           </label>

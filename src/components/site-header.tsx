@@ -161,10 +161,10 @@ function AccountActions() {
         to="/profile"
         className="flex items-center gap-2 rounded-md text-sm outline-none hover:text-brand focus-visible:ring-2 focus-visible:ring-ring"
         activeProps={{ 'aria-current': 'page' }}
-        aria-label={`Meu perfil (${user.name})`}
       >
         <UserAvatar user={user} className="size-8 text-sm" />
-        <span className="hidden max-w-[10ch] truncate xl:inline">{firstName(user)}</span>
+        <span className="sr-only">Meu perfil ({user.name})</span>
+        <span aria-hidden="true" className="hidden max-w-[10ch] truncate xl:inline">{firstName(user)}</span>
       </Link>
       <button type="button" onClick={() => void onLogout()} disabled={logout.isPending} className={primaryAction}>
         <LogOut className="size-[18px]" aria-hidden />

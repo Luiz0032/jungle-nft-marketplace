@@ -85,14 +85,14 @@ export function AuthLayout({
         {mode === 'login' ? (
           <>
             Novo na Kurio?{' '}
-            <Link to="/register" search={search} className="rounded-sm text-brand underline-offset-4 hover:underline">
+            <Link to="/register" search={search} className="rounded-sm text-brand underline underline-offset-4">
               Crie uma conta
             </Link>
           </>
         ) : (
           <>
             Já tem uma conta?{' '}
-            <Link to="/login" search={search} className="rounded-sm text-brand underline-offset-4 hover:underline">
+            <Link to="/login" search={search} className="rounded-sm text-brand underline underline-offset-4">
               Entre
             </Link>
           </>

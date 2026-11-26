@@ -249,7 +249,7 @@ function Checkout({ user }: { user: User }) {
             Resumo do pedido
           </h2>
           {quote.isPending ? (
-            <div className="flex flex-col gap-3" aria-label="Calculando resumo">
+            <div className="flex flex-col gap-3" role="status" aria-label="Calculando resumo">
               {Array.from({ length: 4 }, (_, i) => (
                 <div key={i} className="shimmer h-5 w-full rounded-sm" />
               ))}
@@ -377,7 +377,7 @@ function PhaseNotice({ phase, onDiscard, onDismiss }: { phase: Phase; onDiscard:
 
 function CheckoutSkeleton() {
   return (
-    <div className="flex flex-col gap-8 py-8 lg:flex-row lg:gap-12" aria-busy="true" aria-label="Carregando pagamento">
+    <div className="flex flex-col gap-8 py-8 lg:flex-row lg:gap-12" role="status" aria-busy="true" aria-label="Carregando pagamento">
       <div className="flex flex-1 flex-col gap-4">
         <div className="shimmer h-8 w-48 rounded-sm" />
         <div className="shimmer h-10 w-full rounded-md" />
