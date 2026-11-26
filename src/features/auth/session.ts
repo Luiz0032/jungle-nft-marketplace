@@ -142,6 +142,14 @@ export function createAuth({ queryClient, realtime }: { queryClient: QueryClient
       connectSocket(session.token)
     },
 
+    /** Perfil editado (nome, e-mail, avatar): atualiza o usuário da sessão atual — ignora resposta de outro usuário. */
+    updateUser(user: User) {
+      if (state.status !== 'authenticated' || state.session.user.id !== user.id) return
+      const session = { ...state.session, user }
+      writeStorage(SESSION_KEY, session)
+      set({ ...state, session })
+    },
+
     async signOut() {
       const token = currentToken()
       toGuest(false)

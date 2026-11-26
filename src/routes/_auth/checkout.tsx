@@ -4,6 +4,7 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 import { AlertTriangle, Loader2 } from 'lucide-react'
 import { useEffect, useId, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
+import { FormField } from '@/components/form-field'
 import { Button } from '@/components/ui/button'
 import { CollectorSchema, type Collector, type Network, type Quote, type User } from '@/contracts'
 import { useCurrentUser } from '@/features/auth/hooks'
@@ -160,8 +161,8 @@ function Checkout({ user }: { user: User }) {
               </h2>
               <fieldset className="flex flex-col gap-4">
                 <legend className="mb-4 text-base font-bold text-foreground">Dados do colecionador</legend>
-                <Field id={`${formId}-name`} label="Nome completo" error={form.formState.errors.name?.message} {...form.register('name')} autoComplete="name" />
-                <Field id={`${formId}-email`} label="E-mail" type="email" error={form.formState.errors.email?.message} {...form.register('email')} autoComplete="email" />
+                <FormField id={`${formId}-name`} label="Nome completo" error={form.formState.errors.name?.message} {...form.register('name')} autoComplete="name" />
+                <FormField id={`${formId}-email`} label="E-mail" type="email" error={form.formState.errors.email?.message} {...form.register('email')} autoComplete="email" />
               </fieldset>
               <WalletPicker
                 userId={user.id}
@@ -372,30 +373,6 @@ function PhaseNotice({ phase, onDiscard, onDismiss }: { phase: Phase; onDiscard:
     )
   }
   return null
-}
-
-type FieldProps = React.ComponentProps<'input'> & { id: string; label: string; error?: string }
-
-function Field({ id, label, error, ...props }: FieldProps) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <label htmlFor={id} className="text-sm text-foreground">
-        {label}
-      </label>
-      <input
-        id={id}
-        aria-invalid={error ? true : undefined}
-        aria-describedby={error ? `${id}-error` : undefined}
-        className="h-10 rounded-md border border-border-soft bg-surface-dark px-3 text-sm text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring aria-invalid:border-coral"
-        {...props}
-      />
-      {error && (
-        <p id={`${id}-error`} className="text-xs text-coral">
-          {error}
-        </p>
-      )}
-    </div>
-  )
 }
 
 function CheckoutSkeleton() {

@@ -4,6 +4,7 @@ import { useCurrentUser } from '@/features/auth/hooks'
 import { useLogoutMutation } from '@/features/auth/queries'
 import { firstName } from '@/features/auth/session'
 import { useCart } from '@/features/cart/queries'
+import { UserAvatar } from '@/features/profile/components/user-avatar'
 import { notify } from '@/lib/notify'
 import { cn } from '@/lib/utils'
 
@@ -162,12 +163,7 @@ function AccountActions() {
         activeProps={{ 'aria-current': 'page' }}
         aria-label={`Meu perfil (${user.name})`}
       >
-        <span
-          aria-hidden="true"
-          className="grid size-8 place-items-center rounded-full bg-surface-dark text-sm font-bold text-brand"
-        >
-          {user.name.trim().charAt(0).toUpperCase()}
-        </span>
+        <UserAvatar user={user} className="size-8 text-sm" />
         <span className="hidden max-w-[10ch] truncate xl:inline">{firstName(user)}</span>
       </Link>
       <button type="button" onClick={() => void onLogout()} disabled={logout.isPending} className={primaryAction}>

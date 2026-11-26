@@ -313,6 +313,8 @@ TODO
 - Badge do carrinho no header só aparece quando houver contagem real do carrinho — nada de número estático do Figma.
 - Abaixo de `lg` (1024) o header esconde a nav e mantém busca/carrinho/Entrar; o footer empilha colunas. O Figma mobile não tem footer e usa Tab Bar inferior (`70395:245`) — ver Limitações.
 - Ícones sociais do footer são imagens com `alt` (sem link: não há perfis reais).
+- **Perfil:** cartão com avatar (imagem ou inicial) + nome/e-mail e botão "Alterar foto" (`<input type=file>` visualmente oculto com label-botão; tipo PNG/JPEG/WebP e ≤ 1 MB checados no cliente antes de ler o arquivo e de novo pelo servidor com o mesmo `AvatarInputSchema`). "Dados pessoais" envia só os campos alterados (`PATCH /profile`), botão desabilitado sem alteração; a resposta atualiza o cache do perfil e o usuário da sessão (`auth.updateUser`, header). "Alterar senha" pede senha atual + nova + confirmação; sucesso limpa o formulário e avisa que as outras sessões foram encerradas. Erros do servidor (`fields`) vão para o campo com foco (`applyServerError`).
+- **Carteiras:** lista com selo "Primária" (ícone + texto, borda primary — não só cor), "Editar" abre edição inline do nome (Esc cancela, foco volta ao botão) e "Tornar primária" só aparece nas não primárias — a UI nunca permite ficar sem primária; quem garante "exatamente uma" é o servidor, e após criar/editar a lista é refeita (`invalidateQueries`) em vez de remendada. Endereço duplicado na mesma rede → 409 no campo. Header do avatar usa `UserAvatar` (imagem enviada ou inicial).
 
 ## 12. Limitações conhecidas
 - Sessão não é sincronizada entre abas: logout/login em outra aba não atualiza esta até a próxima chamada privada (401) ou refresh. Não há vazamento: cada aba só usa o próprio token em memória.
@@ -321,7 +323,9 @@ TODO
 - **Checkout e Confirmação sem referência visual do Figma** (mesmo limite do MCP na Sessão 7; não há `design/ref/`). Montados com os tokens: checkout em duas etapas com resumo de 380px à direita; confirmação como cartão de 578px com a faixa `primary` de 10px (medidas do modal `70376:239`), em rota própria em vez de modal sobre o checkout. Comparar na Sessão 9.
 - **Extensão de carteira simulada.** Não há carteira real: `src/mocks/wallet-extension.ts` injeta `window.kurioWallet` (contrato em `src/contracts/wallet-extension.ts`) com o próprio popup de aprovação. Sem extensão, a app diz "Nenhuma extensão de carteira encontrada". Não há assinatura de transação: o "pagamento" é o `POST /orders` e o assentamento do mock.
 - Não há lista "Meus pedidos": um pedido é acessado pela URL `/orders/<id>` (o fluxo leva até ela).
-- Perfil (`/profile`) é só leitura (nome, e-mail) para validar o isolamento por usuário; edição, avatar e senha ainda não implementados.
+- **Perfil e Carteiras sem referência visual do Figma** (Sessão 8: não há `design/ref/perfil-*.png`/`carteiras-*.png` e o Figma MCP segue no limite do plano). Montados com os tokens e os padrões do checkout: cartões `bg-surface` raio 10, campos com label visível, coluna de 380px (avatar no perfil; "Adicionar carteira" nas carteiras), empilhado abaixo de `lg`. Comparar com `9:1238`/`9:1670` na Sessão 9.
+- Avatar é guardado como data URL no banco mock (localStorage): limite de 1 MB decodificado; sem recorte/redimensionamento no cliente. Não há remover foto (o contrato não tem `DELETE /profile/avatar`).
+- Não há excluir carteira (fora do contrato): só adicionar, renomear e tornar primária.
 - Tab Bar mobile do Figma (`70395:245`) ainda não implementada; mobile usa header compacto + footer empilhado. Entra junto com favoritos/perfil.
 - Figma não tem mobile para Confirmação, Perfil e Carteiras: serão adaptados do desktop com os mesmos tokens.
 - TODO: demais itens.
