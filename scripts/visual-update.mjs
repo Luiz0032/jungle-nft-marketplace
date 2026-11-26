@@ -24,7 +24,7 @@ if (docker.status !== 0) {
 
 const inner = [
   'npm install -g pnpm@12.23.0',
-  'pnpm install --frozen-lockfile',
+  "pnpm install --frozen-lockfile --allow-build='!msw'",
   'pnpm build',
   `pnpm exec playwright test --grep @visual --update-snapshots ${extra}`,
 ].join(' && ')

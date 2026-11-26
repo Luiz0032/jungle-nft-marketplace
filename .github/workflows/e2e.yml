@@ -42,7 +42,8 @@ jobs:
           cache: pnpm
 
       - name: Instalar dependências
-        run: pnpm install --frozen-lockfile
+        # O worker do MSW já está versionado em public/ (msw init); o postinstall dele não é necessário.
+        run: pnpm install --frozen-lockfile --allow-build='!msw'
 
       - name: Versão do Playwright
         run: |
