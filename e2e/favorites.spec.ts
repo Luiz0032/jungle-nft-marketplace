@@ -29,6 +29,7 @@ test.describe('favoritos @favorites', () => {
   test('otimista, persiste no servidor e desfavorita', async ({ page }) => {
     await loginAs(page, ANA, `/nft/${NFT}`)
     await expect(heart(page)).toHaveAttribute('aria-pressed', 'false')
+    await expect(heart(page)).toBeEnabled() // lista de favoritos carregada antes de mexer no cenário
 
     await setScenario(page, 'slow') // servidor lento: a UI muda antes da resposta
     await heart(page).click()
@@ -49,6 +50,7 @@ test.describe('favoritos @favorites', () => {
   test('falha desfaz a mudança (rollback) e a nova tentativa funciona', async ({ page }) => {
     await loginAs(page, ANA, `/nft/${NFT}`)
     await expect(heart(page)).toHaveAttribute('aria-pressed', 'false')
+    await expect(heart(page)).toBeEnabled() // lista de favoritos carregada antes de mexer no cenário
 
     await setScenario(page, 'offline')
     await heart(page).click()

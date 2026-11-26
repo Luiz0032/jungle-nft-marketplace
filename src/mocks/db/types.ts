@@ -55,6 +55,8 @@ export type OrderRecord = {
   network: Network
   resolveAt: string
   outcome: 'confirmed' | 'rejected'
+  /** `order-hold`: só sai de `pending` por `window.__mock.settleOrder()` (sem timer nem assentamento preguiçoso). */
+  held?: boolean
   /** Snapshot tirado na criação; vira `order.receipt` quando confirmado. */
   snapshot: Receipt
   reservations: { nftId: string; editionId: string; quantity: number }[]

@@ -98,7 +98,9 @@ test.describe('auth @auth', () => {
     await login(page, ANA, '/wallets')
     await expect(page).toHaveURL('/wallets')
 
-    // Próxima chamada privada encontra a sessão expirada: GET /profile ao abrir o perfil.
+    // Próxima chamada privada encontra a sessão expirada: GET /profile ao abrir o perfil
+    // (rede assentada antes, para nenhuma query em voo consumir a expiração no lugar dele).
+    await page.waitForLoadState('networkidle')
     await setScenario(page, 'session-expired')
     await page.getByRole('link', { name: /^Meu perfil \(/ }).click()
 
@@ -114,6 +116,9 @@ test.describe('auth @auth', () => {
 
   test('sessão expirada no refresh vai ao login guardando o destino', async ({ page }) => {
     await login(page, ANA, '/wallets?aba=rede')
+    // O cenário vale na hora para a app aberta: sem esperar, uma query privada ainda em voo (carrinho do header)
+    // consumiria a expiração ANTES do refresh, e o refresh já começaria como convidado (sem `reason=expired`).
+    await page.waitForLoadState('networkidle')
     await setScenario(page, 'session-expired')
     await page.reload()
     await expect(page).toHaveURL(/\/login\?redirect=%2Fwallets%3Faba%3Drede&reason=expired$/)

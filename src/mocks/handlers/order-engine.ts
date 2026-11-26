@@ -55,7 +55,7 @@ export function settleDueOrders() {
   const now = Date.now()
   let changed = false
   for (const rec of Object.values(db().orders)) {
-    if (rec.order.status === 'pending' && Date.parse(rec.resolveAt) <= now) {
+    if (rec.order.status === 'pending' && !rec.held && Date.parse(rec.resolveAt) <= now) {
       settle(rec)
       changed = true
     }
@@ -64,6 +64,7 @@ export function settleDueOrders() {
 }
 
 export function scheduleSettlement(rec: OrderRecord) {
+  if (rec.held) return
   const ms = Math.max(0, Date.parse(rec.resolveAt) - Date.now())
   setTimeout(settleDueOrders, ms + 5)
 }
@@ -73,4 +74,19 @@ export function resumePendingSettlements() {
   for (const rec of Object.values(db().orders)) {
     if (rec.order.status === 'pending') scheduleSettlement(rec)
   }
+}
+
+/**
+ * `order-hold`: assenta um pedido manualmente (Playwright/dev). Mesmo caminho do assentamento normal:
+ * atualiza o banco e publica `order.changed` → o servidor Socket.IO emite `order.updated`.
+ */
+export function settleOrderManually(orderId: string, outcome: 'confirmed' | 'rejected') {
+  const rec = db().orders[orderId]
+  if (!rec) throw new Error(`Pedido inexistente: ${orderId}`)
+  if (rec.order.status !== 'pending') throw new Error(`Pedido ${orderId} já está ${rec.order.status}`)
+  rec.outcome = outcome
+  rec.held = false
+  settle(rec)
+  persist()
+  return rec.order
 }

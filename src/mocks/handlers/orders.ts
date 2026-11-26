@@ -114,6 +114,7 @@ export const ordersHandlers = [
       network: input.network,
       resolveAt: new Date(Date.now() + orderSettleDelayMs()).toISOString(),
       outcome: getScenario() === 'payment-declined' ? 'rejected' : 'confirmed',
+      held: getScenario() === 'order-hold',
       snapshot,
       reservations,
     }

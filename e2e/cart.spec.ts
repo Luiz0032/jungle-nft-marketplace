@@ -80,8 +80,12 @@ test.describe('carrinho @cart', () => {
     await openCart(page)
 
     await setScenario(page, 'slow')
+    const patched = page.waitForResponse((r) => r.request().method() === 'PATCH' && r.url().includes('/api/cart/items/'), {
+      timeout: 10_000,
+    })
     await line(page).getByRole('button', { name: /^Aumentar quantidade/ }).click()
     await expect(qtyInput(page)).toHaveValue('2', { timeout: 500 }) // antes da resposta do servidor
+    expect((await patched).status()).toBe(200) // servidor confirmou ANTES de trocarmos o cenário
     await expect(page.getByTestId('quote-subtotal')).toHaveText(await line(page).getByTestId('line-total').innerText(), { timeout: 10_000 })
 
     await setScenario(page, 'offline')

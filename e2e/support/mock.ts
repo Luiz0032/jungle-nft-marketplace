@@ -17,6 +17,7 @@ type MockControl = {
   dropSockets: (opts?: { userId?: string; outageMs?: number }) => void
   socket: () => { connections: { id: string; userId: string | null }[]; emitted: RealtimeEvent[] }
   orders: () => { id: string; userId: string; status: string; idempotencyKey: string }[]
+  settleOrder: (orderId: string, outcome: 'confirmed' | 'rejected') => void
 }
 declare global {
   interface Window {

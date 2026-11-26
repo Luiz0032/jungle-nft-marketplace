@@ -233,4 +233,33 @@ test.describe('checkout @checkout', () => {
     await page.goto('/checkout')
     await expect(page.getByText('Seu carrinho está vazio')).toBeVisible({ timeout: 15_000 })
   })
+
+  test('order-hold: pedido pendente sobrevive ao refresh e confirma por evento do servidor @realtime', async ({ page }) => {
+    await readyToPay(page)
+    await setScenario(page, 'order-hold')
+    await confirmButton(page).click()
+    await expect(page).toHaveURL(/\/orders\/ord-/)
+    const orderId = new URL(page.url()).pathname.split('/').pop()!
+    await expect(status(page)).toHaveAttribute('data-status', 'pending')
+
+    await page.reload()
+    await expect(status(page)).toHaveAttribute('data-status', 'pending')
+    await expect(page.getByRole('heading', { name: 'Processando pagamento…' })).toBeVisible()
+    // Socket do usuário reconectado após o refresh antes de o servidor emitir.
+    await expect.poll(() => page.evaluate(() => window.__mock!.socket().connections.some((c) => c.userId !== null))).toBe(true)
+
+    await page.evaluate((id) => window.__mock!.settleOrder(id, 'confirmed'), orderId)
+    await expect(status(page)).toHaveAttribute('data-status', 'confirmed')
+    await expect(page.getByRole('heading', { name: 'Pedido confirmado' })).toBeVisible()
+    await expect(live(page)).toContainText('Pagamento confirmado')
+
+    // Chegou pelo socket (order.updated emitido pelo servidor), e nenhum pedido novo foi criado.
+    const emitted = await page.evaluate(() => window.__mock!.socket().emitted)
+    expect(
+      emitted.some((e) => e.type === 'order.updated' && e.payload.orderId === orderId && e.payload.status === 'confirmed'),
+    ).toBe(true)
+    const all = await orders(page)
+    expect(all).toHaveLength(1)
+    expect(all[0]).toMatchObject({ id: orderId, status: 'confirmed' })
+  })
 })

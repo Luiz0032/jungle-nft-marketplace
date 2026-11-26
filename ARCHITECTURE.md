@@ -203,6 +203,7 @@ Achados do POC (msw 2.15.0, @mswjs/socket.io-binding 0.2.0, socket.io-client 4.8
 Implementação: `src/features/auth/session.ts` (`createAuth`), instanciado uma vez em `src/app/app.tsx` (singleton de módulo, instalado antes do primeiro `beforeLoad`) e exposto no contexto do router (`context.auth`) e no React (`AuthContext`, `useAuthState`/`useCurrentUser`).
 
 - **Persistência:** `localStorage['jg:session']` = `Session` validada com zod na leitura. Dados privados do usuário vivem em `jg:user:<userId>:*` (local ou session storage); `clearPrivateStorage()` apaga sessão + todo `jg:user:*`. Chaves públicas (`jg:guest-cart`) sobrevivem ao logout.
+- **Validação concorrente:** se outra chamada privada recebe 401 enquanto `GET /auth/session` está em voo, a validação responde com o estado atual (`expired: true`), e o redirect leva `reason=expired`.
 - **Refresh:** a sessão restaurada fica `validated: false`; `GET /auth/session` (query `['auth','session']`, `skipSessionExpiry`) confirma no boot. Rotas `_auth` aguardam essa validação no `beforeLoad`. 401 → convidado + `reason=expired`; erro de rede → mantém a sessão (a próxima chamada privada decide).
 - **Sessão já validada não é revalidada a cada navegação.** Revalidar em todo `beforeLoad` criou uma corrida real (logout logo após o login: o redirect de um `beforeLoad` atrasado vencia a navegação mais nova). Expiração posterior chega pela próxima chamada privada.
 - **Expiração:** `http.ts` chama `setSessionExpiredHandler(token)` em `SESSION_EXPIRED`/`UNAUTHENTICATED` de requisição que levava `Authorization` (exceto rotas de auth, `skipSessionExpiry`). A auth só expira se o token for o **atual** (resposta atrasada de sessão antiga é ignorada). O `auth_error` do socket faz o mesmo. Em rota protegida → `/login?redirect=<href atual>&reason=expired` (toast + aria-live); em rota pública → só aviso. O flag `expired` sobrevive ao preload por hover (`defaultPreload: 'intent'`), que pode descobrir a expiração antes do clique.
@@ -236,7 +237,8 @@ Implementação: `src/features/auth/session.ts` (`createAuth`), instanciado uma 
 - **Pedido:** `['user', userId, 'orders', id]`, staleTime 0, retry só transitório. `order.updated` atualiza o cache (realtime.ts); enquanto `pending` **e** socket desconectado (`useSocketConnected`), consulta a cada 3 s, com aviso "Conexão em tempo real perdida"; ao reconectar, o realtime refaz pedidos pendentes. A tela só mostra "Pedido confirmado" com `status === 'confirmed'` vindo da API/evento; `rejected` mostra o motivo e "Tentar novamente" (nova tentativa = nova chave). Estado terminal → tentativa encerrada.
 - **Recibo:** `order.receipt`, snapshot criado pelo servidor no `POST /orders` e liberado no `confirmed` — preços mudados depois não o alteram.
 - **Carrinho após a compra:** o servidor mock, ao confirmar, subtrai do carrinho do usuário só as quantidades compradas (o que foi adicionado depois do envio continua); a app invalida o carrinho no `confirmed` (evento ou REST) e remove o cupom usado. Recusado → carrinho intacto e estoque devolvido.
-- Controle de teste: `window.__mock.orders()` lista os pedidos (id, status, chave) para provar "N cliques / timeout → 1 pedido".
+- Controle de teste: `window.__mock.orders()` lista os pedidos (id, status, chave) para provar "N cliques / timeout → 1 pedido"; `window.__mock.settleOrder(id, outcome)` assenta um pedido do cenário `order-hold`.
+- **Fronteira mock × app:** nada fora de `src/mocks` importa de lá, exceto o bootstrap em `main.tsx` (`import('@/mocks/browser')`). A carteira simulada chega só como `window.kurioWallet`, tipada por `src/contracts/wallet-extension.ts`.
 
 ## 8. Política de cache, retry e sincronização
 | Query | staleTime | retry | Observações |
@@ -275,10 +277,13 @@ Otimista: favoritos (toggle) e quantidade do carrinho, com rollback + toast em e
 | `order-timeout` | POST /orders cria o pedido mas a resposta estoura timeout |
 | `payment-declined` | pedido termina `rejected` |
 | `socket-drop` | derruba o socket com pedido pendente e reconecta |
+| `order-hold` | pedido fica `pending` (sem timer, sobrevive a refresh) até `window.__mock.settleOrder(id, 'confirmed' \| 'rejected')`, que assenta pelo mesmo caminho do servidor e emite `order.updated` pelo socket |
 Controle programático (Playwright): `window.__mock.setScenario()`, `.getScenario()`, `.reset()`, `.emit(event)` — emite PELO servidor mock do socket, nunca direto na UI. Também: `.updateEdition(editionId, { price?, available? })` (muda o banco; o servidor emite `nft.updated`), `.dropSockets({ userId?, outageMs? })` e `.socket()` (conexões autenticadas + log de eventos emitidos). `window.__mock` só aparece **depois** de `worker.start()` (specs esperam por ele com `waitForFunction`).
 
 Implementação (`src/mocks/scenarios`): estado em `sessionStorage['jungle-mock-scenario']` (por aba, sobrevive a refresh). Latência e falhas do `flaky` saem de PRNG semeado por `cenário + nº da requisição` → **reproduzível** (mesma sequência de chamadas → mesmos resultados; `setScenario` zera o contador). Detalhes: `out-of-order` só afeta `GET /nfts` (2,5 s, 1,8 s, 1,1 s, 0,4 s, 0,15 s…); `session-expired` expira uma única vez; `sold-out` zera o estoque da 1ª linha no `POST /orders` e responde 409; `order-timeout` cria o pedido e segura a resposta 15 s (> timeout de 10 s do Axios); `payment-declined` assenta `rejected` e devolve o estoque. `price-change` e `socket-drop` dependem do socket.
 Fixtures: ≥ 40 NFTs (filtros/paginação), 2 usuários (`ana@jungle.test` / `Senha@123`, `bruno@jungle.test` / `Senha@123`), cupons `JUNGLE10` (válido), `EXPIRED5` (expirado).
+
+**Testes e cenários:** `setScenario()` vale na hora para a app já aberta. Antes de ativar um cenário de efeito único (`session-expired`) ou de falha (`offline`), o spec espera a rede assentar (`waitForLoadState('networkidle')` ou a resposta da mutação). Senão uma query ainda em voo (por exemplo o carrinho do header) consome o efeito no lugar da chamada testada. A suíte não tem testes pulados: o único que era pulado no mobile (nav do header) agora verifica o comportamento do mobile (nav oculta, carrinho com `aria-current`). Rodada 2× sem retries: 236/236.
 
 ## 10. Decisões de UX
 TODO

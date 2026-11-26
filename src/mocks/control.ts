@@ -1,6 +1,7 @@
 import type { Edition, RealtimeEvent } from '@/contracts'
 import { db, persist, resetDb } from '@/mocks/db'
 import { updateEdition } from '@/mocks/handlers/domain'
+import { settleOrderManually } from '@/mocks/handlers/order-engine'
 import { getScenario, resetScenario, SCENARIOS, setScenario, type ScenarioName } from '@/mocks/scenarios'
 import { dropConnections, emitRaw, resetSocketServer, socketStats, type EmitInput } from '@/mocks/socket'
 
@@ -23,6 +24,8 @@ export type MockControl = {
   socket: () => ReturnType<typeof socketStats>
   /** Pedidos no banco (para provar idempotência: N cliques/tentativas → 1 pedido). */
   orders: () => { id: string; userId: string; status: string; idempotencyKey: string }[]
+  /** `order-hold`: tira o pedido de `pending`; o servidor emite `order.updated` pelo socket. */
+  settleOrder: (orderId: string, outcome: 'confirmed' | 'rejected') => void
 }
 
 declare global {
@@ -55,5 +58,8 @@ export function installMockControl() {
         status: o.order.status,
         idempotencyKey: o.idempotencyKey,
       })),
+    settleOrder: (orderId, outcome) => {
+      settleOrderManually(orderId, outcome)
+    },
   }
 }

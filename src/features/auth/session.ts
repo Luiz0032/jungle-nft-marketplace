@@ -67,6 +67,15 @@ export function createAuth({ queryClient, realtime }: { queryClient: QueryClient
     connectSocket(null)
   }
 
+  /**
+   * A sessão mudou enquanto a validação estava em voo (outra chamada privada recebeu 401 e expirou a sessão,
+   * ou houve login/logout). Responde com o estado ATUAL — inclusive `expired`, para o redirect levar `reason=expired`.
+   */
+  const settledElsewhere = (): EnsureResult =>
+    state.status === 'authenticated'
+      ? { session: state.session, expired: false }
+      : { session: null, expired: expiredFlag }
+
   async function validate(token: string): Promise<EnsureResult> {
     try {
       const session = await queryClient.fetchQuery({
@@ -75,12 +84,12 @@ export function createAuth({ queryClient, realtime }: { queryClient: QueryClient
         staleTime: 0,
         retry: false,
       })
-      if (currentToken() !== token) return { session: null, expired: false } // trocou de sessão no meio
+      if (currentToken() !== token) return settledElsewhere() // trocou de sessão no meio
       writeStorage(SESSION_KEY, session)
       set({ status: 'authenticated', session, validated: true })
       return { session, expired: false }
     } catch (error) {
-      if (currentToken() !== token) return { session: null, expired: false }
+      if (currentToken() !== token) return settledElsewhere()
       if (isApiError(error, 'SESSION_EXPIRED') || isApiError(error, 'UNAUTHENTICATED')) {
         toGuest(true)
         return { session: null, expired: true }
