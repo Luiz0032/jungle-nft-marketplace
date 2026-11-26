@@ -28,7 +28,8 @@ type ScenarioState = {
   name: ScenarioName
   requestCount: number
   searchCount: number
-  sessionExpiredConsumed: boolean
+  /** Efeitos que disparam uma única vez por ativação do cenário. */
+  consumed: string[]
 }
 
 const STORAGE_KEY = 'jungle-mock-scenario'
@@ -36,7 +37,7 @@ const fresh = (name: ScenarioName): ScenarioState => ({
   name,
   requestCount: 0,
   searchCount: 0,
-  sessionExpiredConsumed: false,
+  consumed: [],
 })
 
 let state: ScenarioState = load()
@@ -44,7 +45,7 @@ let state: ScenarioState = load()
 function load(): ScenarioState {
   try {
     const parsed = JSON.parse(sessionStorage.getItem(STORAGE_KEY) ?? 'null') as ScenarioState | null
-    if (parsed && isScenario(parsed.name)) return parsed
+    if (parsed && isScenario(parsed.name) && Array.isArray(parsed.consumed)) return parsed
   } catch {
     /* estado corrompido → default */
   }
@@ -79,11 +80,21 @@ export const orderSettleDelayMs = () => (state.name === 'slow' ? 5_000 : 2_000)
 
 /** `session-expired`: a PRÓXIMA chamada privada (uma vez) encontra a sessão expirada. */
 export function consumeSessionExpiry(): boolean {
-  if (state.name !== 'session-expired' || state.sessionExpiredConsumed) return false
-  state.sessionExpiredConsumed = true
+  return consumeOnce('session-expired', 'session-expired')
+}
+
+/** true na primeira chamada enquanto `scenario` estiver ativo; false depois (ou em outro cenário). */
+export function consumeOnce(scenario: ScenarioName, effect: string): boolean {
+  if (state.name !== scenario || state.consumed.includes(effect)) return false
+  state.consumed.push(effect)
   save()
   return true
 }
+
+/** `price-change`: atraso entre a cotação e o evento de mudança de preço. */
+export const PRICE_CHANGE_DELAY_MS = 3_000
+/** `socket-drop`: quanto tempo o servidor recusa reconexões depois de derrubar o socket. */
+export const SOCKET_OUTAGE_MS = 3_000
 
 function latencyFor(method: string, path: string, rand: number): number {
   switch (state.name) {

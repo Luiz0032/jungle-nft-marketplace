@@ -1,11 +1,21 @@
 import type { Page } from '@playwright/test'
+import type { RealtimeEvent } from '../../src/contracts'
 
-/** Espelho mínimo de `src/mocks/control.ts` para os specs (sem puxar MSW para o projeto node). */
+/** Espelho de `src/mocks/control.ts` para os specs (sem puxar MSW para o projeto node). */
+type EmitInput = Omit<RealtimeEvent, 'eventId' | 'emittedAt' | 'userId'> & {
+  eventId?: string
+  emittedAt?: string
+  userId?: string | null
+}
 type MockControl = {
   scenarios: readonly string[]
   getScenario: () => string
   setScenario: (name: string) => void
   reset: () => Promise<void>
+  updateEdition: (editionId: string, patch: { price?: string; available?: number }) => void
+  emit: (event: EmitInput) => RealtimeEvent
+  dropSockets: (opts?: { userId?: string; outageMs?: number }) => void
+  socket: () => { connections: { id: string; userId: string | null }[]; emitted: RealtimeEvent[] }
 }
 declare global {
   interface Window {

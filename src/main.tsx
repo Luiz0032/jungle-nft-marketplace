@@ -1,6 +1,5 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import { App } from '@/app/app'
 import { env } from '@/lib/env'
 import './index.css'
 
@@ -11,10 +10,16 @@ async function enableMocking() {
   await startMocks()
 }
 
-void enableMocking().then(() => {
+async function bootstrap() {
+  await enableMocking()
+  // Import dinâmico de propósito: o engine.io-client captura `globalThis.WebSocket` quando o módulo é
+  // avaliado. Importar a app só depois do `worker.start()` garante que ele pegue o WebSocket do MSW.
+  const { App } = await import('@/app/app')
   createRoot(document.getElementById('root')!).render(
     <StrictMode>
       <App />
     </StrictMode>,
   )
-})
+}
+
+void bootstrap()

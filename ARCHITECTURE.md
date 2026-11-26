@@ -38,7 +38,7 @@ Playwright: `webServer = pnpm preview` (porta 4173) — **rode `pnpm build` ante
 `src/index.css`: variáveis `--jg-*` em `:root` → mapeadas para as variáveis do shadcn → expostas no Tailwind via `@theme inline` (`bg-brand`, `bg-surface`, …). Fontes/breakpoints em `@theme`. **Valores provisórios**: `design/tokens.md` ainda não existe (ver Limitações).
 
 Cenário de mock: query param `?scenario=<nome>` (persistido na sessão) ou painel de dev (canto inferior, só com mocks ligados). Reset: `?reset=1` ou botão "Resetar cenário".
-Bootstrap: `await worker.start()` ANTES de criar o socket e renderizar a app (o MSW precisa ter substituído o `WebSocket` global antes do `socket.io-client` capturá-lo).
+Bootstrap: `await worker.start()` ANTES de criar o socket e renderizar a app (o MSW precisa ter substituído o `WebSocket` global antes do `socket.io-client` capturá-lo). Por isso a app inteira é carregada com `import('@/app/app')` **depois** do start — ver §5 "Limitações do binding".
 
 ## 3. Dinheiro e quantidades
 - Tipo `Eth = string` decimal (ex.: `"0.125000000000000000"`), regex validada no zod.
@@ -178,7 +178,20 @@ Regras do cliente (`lib/realtime.ts`):
 5. Ao reconectar: refetch REST dos recursos ativos (queries com observers + pedido pendente).
 
 ### Limitações do binding
-Suporta só o namespace padrão e eventos de texto (sem namespaces customizados, acks ou binário). Long-polling não é interceptado: forçamos `websocket`. TODO: registrar o que for observado no POC.
+Suporta só o namespace padrão e eventos de texto (sem namespaces customizados, acks ou binário). Long-polling não é interceptado: forçamos `websocket`.
+
+Achados do POC (msw 2.15.0, @mswjs/socket.io-binding 0.2.0, socket.io-client 4.8.4 / engine.io-client 6.6.8). O binding **funciona**, com quatro armadilhas:
+1. **Ordem de import.** O engine.io-client captura `globalThis.WebSocket` na *avaliação do módulo* (`transports/websocket.js`: `const WebSocketCtor = globalThis.WebSocket`), e o MSW só troca o global dentro de `worker.start()`. Se `socket.io-client` for importado estaticamente pela árvore da app, ele fica com o WebSocket nativo e a conexão vai para a rede real (`ERR_NAME_NOT_RESOLVED`). Solução: `main.tsx` faz `await startMocks()` e só então `await import('@/app/app')`.
+2. **Path `/socket.io/`.** O `WebSocketHandler.parse` do MSW 2.15 reescreve o path do cliente `/socket.io/` → `/` antes de casar a URL. Um `ws.link('…/socket.io/*')` nunca casa (a conexão fica sem handler e vaza para a rede). Usamos `ws.link(\`${VITE_SOCKET_URL}/*\`)`.
+3. **Handshake automático.** O binding responde sozinho `0{…}` (OPEN) e `40{"sid":"test"}` (CONNECT) sem esperar o CONNECT do cliente nem validar `auth`. A autenticação é feita no `src/mocks/socket.ts` lendo o pacote cru do cliente `40{"token":…}`: sem token → conexão anônima (só eventos públicos); token inválido/expirado → evento `auth_error` + DISCONNECT (`41`), sem reconexão automática. Todo socket tem `sid` `"test"`; identificamos conexões pelo `client.id` do MSW.
+4. **Sem PING.** O OPEN anuncia `pingInterval 25s / pingTimeout 5s`, mas o binding nunca pinga; o cliente derrubaria a conexão a cada ~30 s. O servidor mock envia `2` (PING) a cada 20 s (verificado: mesma conexão após 36 s).
+
+### Implementação
+- Contrato em `src/contracts/realtime.ts` (`RealtimeEventSchema`, união discriminada por `type`); o nome do evento Socket.IO é o próprio `type`. `nft.updated` de edição usa `resource: { type: 'edition', id: editionId }` e `version` = versão da edição.
+- Servidor (`src/mocks/socket.ts`): o barramento interno (`mocks/events.ts`) vira evento — `edition.changed` → `nft.updated` público para todas as conexões; `order.changed` → `order.updated` só para conexões do dono. Mantém log dos últimos 200 eventos emitidos (`__mock.socket().emitted`).
+- Cliente (`src/lib/socket.ts`): um socket por vez; convidado conecta anônimo; `connectSocket(token)` troca a conexão; `disconnectSocket()` remove todos os listeners antes de desconectar. Backoff de reconexão 0,5–3 s.
+- `src/lib/realtime.ts`: valida com zod; LRU de 500 `eventId`; última versão por `resource.type:id` + comparação com a versão já no cache (REST mais novo vence); filtra `userId`; pedido terminal nunca muda (e terminal dispara refetch do pedido para trazer o recibo); `nft.updated` atualiza o detalhe, recalcula o resumo nas listas (ou invalida as listas que contêm o NFT se o detalhe não está em cache), invalida carrinho e cotação; no `reconnect` do Manager refaz as queries ativas + pedidos `pending`. Cada `attach` incrementa uma época: handlers do socket anterior são removidos e, se algo atrasado chegar, é descartado.
+- Cenários: `price-change` sobe 10% o preço da 1ª linha 3 s após o primeiro `POST /quote` (uma vez); `socket-drop` derruba as conexões do usuário 300 ms após criar o pedido e recusa reconexões por 3 s (o pedido assenta em 2 s → o `order.updated` é perdido e precisa de reconciliação REST).
 
 ## 6. Sessão
 TODO: token em `localStorage` (`session`) com `expiresAt`; validação via `/auth/session` no boot; interceptor Axios 401 → limpa sessão e redireciona para `/login?redirect=<rota+search>`; no checkout, rascunho do formulário persiste em `sessionStorage` para retomada.
@@ -213,7 +226,7 @@ Otimista: favoritos (toggle) e quantidade do carrinho, com rollback + toast em e
 | `order-timeout` | POST /orders cria o pedido mas a resposta estoura timeout |
 | `payment-declined` | pedido termina `rejected` |
 | `socket-drop` | derruba o socket com pedido pendente e reconecta |
-Controle programático (Playwright): `window.__mock.setScenario()`, `.getScenario()`, `.reset()`, `.emit(event)` — emite PELO servidor mock do socket, nunca direto na UI. `window.__mock` só aparece **depois** de `worker.start()` (specs esperam por ele com `waitForFunction`).
+Controle programático (Playwright): `window.__mock.setScenario()`, `.getScenario()`, `.reset()`, `.emit(event)` — emite PELO servidor mock do socket, nunca direto na UI. Também: `.updateEdition(editionId, { price?, available? })` (muda o banco; o servidor emite `nft.updated`), `.dropSockets({ userId?, outageMs? })` e `.socket()` (conexões autenticadas + log de eventos emitidos). `window.__mock` só aparece **depois** de `worker.start()` (specs esperam por ele com `waitForFunction`).
 
 Implementação (`src/mocks/scenarios`): estado em `sessionStorage['jungle-mock-scenario']` (por aba, sobrevive a refresh). Latência e falhas do `flaky` saem de PRNG semeado por `cenário + nº da requisição` → **reproduzível** (mesma sequência de chamadas → mesmos resultados; `setScenario` zera o contador). Detalhes: `out-of-order` só afeta `GET /nfts` (2,5 s, 1,8 s, 1,1 s, 0,4 s, 0,15 s…); `session-expired` expira uma única vez; `sold-out` zera o estoque da 1ª linha no `POST /orders` e responde 409; `order-timeout` cria o pedido e segura a resposta 15 s (> timeout de 10 s do Axios); `payment-declined` assenta `rejected` e devolve o estoque. `price-change` e `socket-drop` dependem do socket.
 Fixtures: ≥ 40 NFTs (filtros/paginação), 2 usuários (`ana@jungle.test` / `Senha@123`, `bruno@jungle.test` / `Senha@123`), cupons `JUNGLE10` (válido), `EXPIRED5` (expirado).

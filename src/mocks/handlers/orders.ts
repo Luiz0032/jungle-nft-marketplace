@@ -2,7 +2,8 @@ import { delay, HttpResponse } from 'msw'
 import { CreateOrderInputSchema, IDEMPOTENCY_HEADER, type Order, type Receipt } from '@/contracts'
 import { db, nextId, persist } from '@/mocks/db'
 import type { OrderRecord } from '@/mocks/db'
-import { getScenario, ORDER_TIMEOUT_HANG_MS, orderSettleDelayMs } from '@/mocks/scenarios'
+import { getScenario, ORDER_TIMEOUT_HANG_MS, orderSettleDelayMs, SOCKET_OUTAGE_MS } from '@/mocks/scenarios'
+import { dropConnections } from '@/mocks/socket'
 import { updateEdition } from './domain'
 import { scheduleSettlement } from './order-engine'
 import { assertAvailable, priceLines } from './quote'
@@ -119,6 +120,12 @@ export const ordersHandlers = [
     db().orders[rec.order.id] = rec
     persist()
     scheduleSettlement(rec)
+
+    if (getScenario() === 'socket-drop') {
+      // Queda durante o pending: o order.updated é perdido; o cliente precisa reconciliar via REST ao reconectar.
+      const userId = user.id
+      setTimeout(() => dropConnections({ userId, outageMs: SOCKET_OUTAGE_MS }), 300)
+    }
 
     if (getScenario() === 'order-timeout') {
       // O pedido JÁ existe; só a resposta não chega a tempo (cliente deve recuperar via /orders/by-key).

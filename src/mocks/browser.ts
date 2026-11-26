@@ -4,8 +4,9 @@ import { initDb } from '@/mocks/db'
 import { handlers } from '@/mocks/handlers'
 import { resumePendingSettlements } from '@/mocks/handlers/order-engine'
 import { initScenarioFromUrl, resetScenario } from '@/mocks/scenarios'
+import { socketHandlers } from '@/mocks/socket'
 
-export const worker = setupWorker(...handlers)
+export const worker = setupWorker(...handlers, ...socketHandlers)
 
 /**
  * Sobe o "backend" mock: `?reset=1` recria o seed e volta ao cenário default;

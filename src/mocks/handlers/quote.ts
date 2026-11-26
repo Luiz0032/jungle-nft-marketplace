@@ -1,9 +1,10 @@
 import { HttpResponse } from 'msw'
 import { QuoteInputSchema, type Quote, type QuoteInput } from '@/contracts'
 import { add, mul, percentOf, sub } from '@/lib/money'
-import { db, nextId } from '@/mocks/db'
+import { consumeOnce, PRICE_CHANGE_DELAY_MS } from '@/mocks/scenarios'
+import { db, nextId, persist } from '@/mocks/db'
 import type { QuoteRecord } from '@/mocks/db'
-import { findEdition } from './domain'
+import { findEdition, updateEdition } from './domain'
 import { fail, parseBody, requireUser, route } from './utils'
 
 export const QUOTE_TTL_MS = 5 * 60 * 1000
@@ -75,6 +76,17 @@ export const quoteHandlers = [
     const quotes = db().quotes
     for (const [id, q] of Object.entries(quotes)) if (Date.parse(q.quote.expiresAt) < Date.now()) delete quotes[id]
     quotes[quote.id] = { quote, userId, couponCode: coupon?.code ?? null, fingerprint } satisfies QuoteRecord
+
+    // `price-change`: preço da 1ª linha sobe 10% alguns segundos depois da cotação (uma vez) → nft.updated pelo socket.
+    const first = lines[0]
+    if (first && consumeOnce('price-change', 'price-change')) {
+      const editionId = first.line.editionId
+      setTimeout(() => {
+        const current = findEdition(editionId)
+        if (current) updateEdition(editionId, { price: percentOf(current.edition.price, 110) })
+        persist()
+      }, PRICE_CHANGE_DELAY_MS)
+    }
     return HttpResponse.json(quote)
   }),
 ]

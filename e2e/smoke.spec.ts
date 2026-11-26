@@ -13,10 +13,11 @@ test.describe('smoke @smoke', () => {
     expect(health).toEqual({ status: 'ok', mock: true })
   })
 
-  test('acesso direto a rota dinâmica funciona', async ({ page }) => {
+  test('acesso direto a rota dinâmica funciona (e NFT inexistente dá 404)', async ({ page }) => {
+    await page.goto('/nft/nft-001')
+    await expect(page.getByRole('heading', { level: 1, name: /#001$/ })).toBeVisible()
     await page.goto('/nft/abc-123')
-    await expect(page.getByRole('heading', { level: 1, name: 'Detalhe do NFT' })).toBeVisible()
-    await expect(page.getByTestId('nft-id')).toHaveText('ID: abc-123')
+    await expect(page.getByRole('heading', { level: 1, name: 'Página não encontrada' })).toBeVisible()
   })
 
   test('rota inexistente mostra 404', async ({ page }) => {
