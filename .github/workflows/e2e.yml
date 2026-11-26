@@ -15,34 +15,80 @@ concurrency:
   group: e2e-${{ github.ref }}
   cancel-in-progress: true
 
+# Padrão só leitura; apenas o job `baselines` (disparo manual) pode escrever no repositório.
+permissions:
+  contents: read
+
 env:
   # Mesma versão do @playwright/test do lockfile (conferida no passo "Versão do Playwright").
   PLAYWRIGHT_VERSION: 1.65.1
 
+# Actions fixadas por SHA de commit (tag correspondente no comentário).
 jobs:
-  e2e:
+  baselines:
+    if: github.event_name == 'workflow_dispatch' && inputs.update_snapshots
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 20
     permissions:
       contents: write
-    # Imagem oficial: mesmo Chromium e mesmas fontes de sistema usadas para gerar as baselines.
+    # Imagem oficial: mesmo Chromium e mesmas fontes de sistema do job `e2e`.
     container:
       image: mcr.microsoft.com/playwright:v1.65.1-noble
       options: --ipc=host
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
+        with:
+          version: 12.23.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 24
+          cache: pnpm
+      - name: Instalar dependências
+        # O worker do MSW já está versionado em public/ (msw init); o postinstall dele não é necessário.
+        run: pnpm install --frozen-lockfile --allow-build='!msw'
+      - name: Build
+        run: pnpm build
+      - name: Regerar baselines @visual
+        run: pnpm exec playwright test --grep @visual --update-snapshots
+      - name: Commit das baselines
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+          git add e2e/__screenshots__
+          if git diff --cached --quiet; then
+            echo "Baselines sem mudança."
+          else
+            git commit -m "test(visual): baselines Linux (playwright v$PLAYWRIGHT_VERSION)"
+            git push
+          fi
 
-      - uses: pnpm/action-setup@v4
+  e2e:
+    needs: baselines
+    # Roda sempre, exceto se a regeração de baselines falhar.
+    if: ${{ !cancelled() && needs.baselines.result != 'failure' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    container:
+      image: mcr.microsoft.com/playwright:v1.65.1-noble
+      options: --ipc=host
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          # Depois de regerar baselines, testa o commit novo (ponta do branch).
+          ref: ${{ needs.baselines.result == 'success' && github.ref || '' }}
+
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
         with:
           version: 12.23.0
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 24
           cache: pnpm
 
       - name: Instalar dependências
-        # O worker do MSW já está versionado em public/ (msw init); o postinstall dele não é necessário.
         run: pnpm install --frozen-lockfile --allow-build='!msw'
 
       - name: Versão do Playwright
@@ -60,30 +106,12 @@ jobs:
       - name: Build
         run: pnpm build
 
-      - name: Regerar baselines @visual
-        if: github.event_name == 'workflow_dispatch' && inputs.update_snapshots
-        run: pnpm exec playwright test --grep @visual --update-snapshots
-
-      - name: Commit das baselines
-        if: github.event_name == 'workflow_dispatch' && inputs.update_snapshots
-        run: |
-          git config --global --add safe.directory "$GITHUB_WORKSPACE"
-          git config user.name "github-actions[bot]"
-          git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
-          git add e2e/__screenshots__
-          if git diff --cached --quiet; then
-            echo "Baselines sem mudança."
-          else
-            git commit -m "test(visual): baselines Linux (playwright v$PLAYWRIGHT_VERSION)"
-            git push
-          fi
-
       - name: Suíte E2E completa
         run: pnpm test:e2e
 
       - name: Relatório HTML do Playwright
         if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: playwright-report
           path: playwright-report/
@@ -91,7 +119,7 @@ jobs:
 
       - name: Traces e anexos das falhas
         if: ${{ failure() }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: playwright-traces
           path: test-results/
