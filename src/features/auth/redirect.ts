@@ -26,5 +26,7 @@ export function safeRedirect(target: string | undefined): string {
   }
   if (url.origin !== window.location.origin) return '/'
   const path = `${url.pathname}${url.search}${url.hash}`
-  return AUTH_PAGES.test(path) ? '/' : path
+  // A normalização pode PRODUZIR `//host` (ex.: `/.//evil`, `/a/..//evil`): valida a string devolvida.
+  if (!/^\/(?!\/)/.test(path) || AUTH_PAGES.test(path)) return '/'
+  return path
 }
