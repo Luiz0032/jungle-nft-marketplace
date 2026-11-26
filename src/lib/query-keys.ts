@@ -8,6 +8,8 @@ import type { NftListQuery, QuoteInput } from '@/contracts'
 const user = (userId: string) => ['user', userId] as const
 
 export const queryKeys = {
+  /** Validação da sessão atual (GET /auth/session). Some com `queryClient.clear()` no logout/troca. */
+  session: () => ['auth', 'session'] as const,
   nfts: {
     all: ['nfts'] as const,
     lists: () => ['nfts', 'list'] as const,

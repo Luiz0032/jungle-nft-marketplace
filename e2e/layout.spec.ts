@@ -30,14 +30,15 @@ test.describe('layout base @visual @a11y', () => {
       await expect(nav.getByText('Criadores')).toHaveAttribute('aria-disabled', 'true')
     }
     await expect(page.getByRole('link', { name: 'Carrinho' })).toHaveAttribute('href', '/cart')
-    await page.getByRole('link', { name: 'Entrar' }).click()
-    await expect(page).toHaveURL('/login')
 
     const footer = page.getByRole('contentinfo')
     await expect(footer.getByText('© 2026 Kurio. Propriedade digital para todos.')).toBeVisible()
     // Newsletter fora de escopo: desabilitada, não finge sucesso.
     await expect(footer.getByRole('button', { name: 'Enviar' })).toBeDisabled()
-    await expect(footer.getByLabel('E-mail')).toBeDisabled()
+    await expect(footer.getByLabel('E-mail para a newsletter')).toBeDisabled()
+
+    await page.getByRole('link', { name: 'Entrar' }).click()
+    await expect(page).toHaveURL('/login')
   })
 
   test('fluxo de compra ativa "Mercado" no header', async ({ page }) => {

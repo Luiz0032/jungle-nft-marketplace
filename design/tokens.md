@@ -115,6 +115,8 @@ Em `public/assets/`. Artes de NFT 1254 × 1254 no Figma → webp em duas largura
 | `icons/login.svg` | 17.8 × 16.9 (slot 20 × 20) | 0.8 KB | botão Entrar |
 | `icons/badge.svg` | 20 × 20 (slot 16, inset −12.5%) | 0.3 KB | badge do carrinho (círculo) |
 | `icons/active-underline.svg` | 58 × 3 | 0.3 KB | sublinhado do nav ativo (implementado em CSS) |
+| `icons/google.svg` | 20 × 20 | 3 KB | botão social (composto dos 7 vetores do node `70483:242`) |
+| `icons/facebook.svg` | 20 × 20 | 0.6 KB | botão social (`70483:259`) |
 | `icons/social-{facebook,instagram,twitter,linkedin,youtube}.svg` | 32 × 32 (slot 30, inset −3.33%) | 0.5–1.7 KB | footer |
 
 Ícones são SVG (vetor), não webp. Ícones de UI genéricos (coração, setas, fechar) vêm de `lucide-react`.

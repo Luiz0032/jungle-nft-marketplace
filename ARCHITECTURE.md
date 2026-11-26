@@ -197,7 +197,17 @@ Achados do POC (msw 2.15.0, @mswjs/socket.io-binding 0.2.0, socket.io-client 4.8
 - Cenários: `price-change` sobe 10% o preço da 1ª linha 3 s após o primeiro `POST /quote` (uma vez); `socket-drop` derruba as conexões do usuário 300 ms após criar o pedido e recusa reconexões por 3 s (o pedido assenta em 2 s → o `order.updated` é perdido e precisa de reconciliação REST).
 
 ## 6. Sessão
-TODO: token em `localStorage` (`session`) com `expiresAt`; validação via `/auth/session` no boot; interceptor Axios 401 → limpa sessão e redireciona para `/login?redirect=<rota+search>`; no checkout, rascunho do formulário persiste em `sessionStorage` para retomada.
+Implementação: `src/features/auth/session.ts` (`createAuth`), instanciado uma vez em `src/app/app.tsx` (singleton de módulo, instalado antes do primeiro `beforeLoad`) e exposto no contexto do router (`context.auth`) e no React (`AuthContext`, `useAuthState`/`useCurrentUser`).
+
+- **Persistência:** `localStorage['jg:session']` = `Session` validada com zod na leitura. Dados privados do usuário vivem em `jg:user:<userId>:*` (local ou session storage); `clearPrivateStorage()` apaga sessão + todo `jg:user:*`. Chaves públicas (`jg:guest-cart`) sobrevivem ao logout.
+- **Refresh:** a sessão restaurada fica `validated: false`; `GET /auth/session` (query `['auth','session']`, `skipSessionExpiry`) confirma no boot. Rotas `_auth` aguardam essa validação no `beforeLoad`. 401 → convidado + `reason=expired`; erro de rede → mantém a sessão (a próxima chamada privada decide).
+- **Sessão já validada não é revalidada a cada navegação.** Revalidar em todo `beforeLoad` criou uma corrida real (logout logo após o login: o redirect de um `beforeLoad` atrasado vencia a navegação mais nova). Expiração posterior chega pela próxima chamada privada.
+- **Expiração:** `http.ts` chama `setSessionExpiredHandler(token)` em `SESSION_EXPIRED`/`UNAUTHENTICATED` de requisição que levava `Authorization` (exceto rotas de auth, `skipSessionExpiry`). A auth só expira se o token for o **atual** (resposta atrasada de sessão antiga é ignorada). O `auth_error` do socket faz o mesmo. Em rota protegida → `/login?redirect=<href atual>&reason=expired` (toast + aria-live); em rota pública → só aviso. O flag `expired` sobrevive ao preload por hover (`defaultPreload: 'intent'`), que pode descobrir a expiração antes do clique.
+- **Login/cadastro:** `useLoginMutation`/`useRegisterMutation` → `auth.signIn(session)`. Convidado → usuário: mantém o cache público, troca o socket. Usuário A → B: `wipe()` completo antes.
+- **Logout:** sai da rota protegida primeiro (cancela `beforeLoad` pendente), depois `wipe()` + `POST /auth/logout` (melhor esforço) + socket anônimo.
+- **`wipe()` (invariante 5), nesta ordem:** desconecta o socket (remove listeners; nenhum evento tardio entra) → cancela queries → `queryClient.clear()` → `realtime.reset()` (ids/versões vistos) → `clearPrivateStorage()`.
+- **Redirect seguro:** `safeRedirect()` aceita só caminho relativo da app (bloqueia `//host`, `/\host`, URL absoluta e loop para /login|/register).
+- **Formulários:** react-hook-form + `zodResolver` com os schemas de `src/contracts` (cadastro estende com `confirmPassword`, só no cliente). `fields` do erro da API → erro no campo com foco (`CONFLICT` de e-mail); demais erros → `root.server` com `role="alert"`.
 
 ## 7. Carrinho
 TODO: convidado em `localStorage`; logado no servidor mock; merge no login; atualização otimista de quantidade com rollback.
@@ -238,6 +248,14 @@ Fixtures: ≥ 40 NFTs (filtros/paginação), 2 usuários (`ana@jungle.test` / `S
 TODO
 
 ## 11. Desvios do Figma e acessibilidade
+- **Login/Cadastro:** no desktop o Figma mostra o modal sobre a Home com scrim; como a Home ainda é placeholder, `/login` e `/register` são rotas com o cartão de 500px (mesmas medidas do modal: raio 8, faixa primary de 10px, X que volta ao início) sobre o fundo `ink`, sem scrim. Abas "Entrar | Criar conta" são links que preservam `redirect`. No mobile (< lg) header e footer somem, como no Figma.
+- Inputs do Figma usam só placeholder: o `<label>` existe e está associado (`sr-only`); erros ficam abaixo do campo (`aria-describedby`, `aria-invalid`, borda coral). Mostrar/ocultar senha usa `EyeOff`/`Eye` do lucide (o Figma só desenha o estado "oculto"); também na confirmação de senha.
+- Botão principal do cadastro: "Criar perfil" no mobile e "Criar conta" no desktop, como nos frames.
+- Login social e "Esqueceu a senha?" estão fora do escopo: desabilitados, com o aviso "Login social indisponível nesta demonstração." (texto extra em relação ao Figma).
+- Header logado (não desenhado no Figma): avatar com inicial + primeiro nome (≥ xl) levando ao perfil, e botão "Sair" no estilo do "Entrar".
+- "Início" fica visualmente ativo em Entrar/Criar conta/Perfil/Carteiras (descrição do componente no Figma); `aria-current="page"` só na Home.
+- Toasts no canto inferior direito: no superior cobriam o botão Entrar/Sair do header (e o hover pausava o fechamento).
+- Input da newsletter renomeado para "E-mail para a newsletter" (o nome "E-mail" colidia com o do login).
 - Marca do layout é **KURIO** (wordmark em texto, como no Figma); `<title>` = "Kurio — Marketplace de NFTs".
 - Layout base (`__root`): header e footer dentro do container de 1200px, como nos frames desktop. Header com divisor nas telas Início/Perfil/Carteiras/auth; sem divisor no fluxo "Mercado" (NFT, carrinho, checkout, pedido), onde "Mercado" fica ativo.
 - Itens sem funcionalidade no escopo **não fingem funcionar** (invariante 10): "Criadores"/"Aprenda" no header são texto `aria-disabled`; links do footer só existem para rotas reais (`/profile`, `/wallets`), o resto é texto; newsletter tem input e botão `disabled` com aviso "Indisponível nesta demonstração".
@@ -247,6 +265,8 @@ TODO
 - Ícones sociais do footer são imagens com `alt` (sem link: não há perfis reais).
 
 ## 12. Limitações conhecidas
+- Sessão não é sincronizada entre abas: logout/login em outra aba não atualiza esta até a próxima chamada privada (401) ou refresh. Não há vazamento: cada aba só usa o próprio token em memória.
+- Perfil (`/profile`) é só leitura (nome, e-mail) para validar o isolamento por usuário; edição, avatar e senha ainda não implementados.
 - Tab Bar mobile do Figma (`70395:245`) ainda não implementada; mobile usa header compacto + footer empilhado. Entra junto com favoritos/perfil.
 - Figma não tem mobile para Confirmação, Perfil e Carteiras: serão adaptados do desktop com os mesmos tokens.
 - Seed do mock ainda usa arte SVG generativa; as 4 artes do Figma (`public/assets/nft/`)

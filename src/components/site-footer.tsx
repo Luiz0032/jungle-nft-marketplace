@@ -1,4 +1,5 @@
 import { Link } from '@tanstack/react-router'
+import { cn } from '@/lib/utils'
 
 /**
  * Footer — Figma "Footer" (70492:696). Conteúdo institucional estático.
@@ -70,9 +71,9 @@ const socialNames: Record<(typeof socials)[number], string> = {
 
 const focusRing = 'rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-ring'
 
-export function SiteFooter() {
+export function SiteFooter({ className }: { className?: string }) {
   return (
-    <footer className="mx-auto mt-24 w-full max-w-content lg:px-0">
+    <footer className={cn("mx-auto mt-24 w-full max-w-content lg:px-0", className)}>
       {/* Medalhões + newsletter */}
       <div className="bg-surface p-8">
         <div className="grid gap-8 md:grid-cols-2 lg:flex lg:items-stretch lg:gap-0">
@@ -106,7 +107,7 @@ export function SiteFooter() {
             </h2>
             <div className="flex h-10 items-center rounded-md bg-surface-dark shadow-field">
               <label htmlFor="footer-newsletter-email" className="sr-only">
-                E-mail
+                E-mail para a newsletter
               </label>
               <input
                 id="footer-newsletter-email"

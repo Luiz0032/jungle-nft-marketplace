@@ -1,12 +1,14 @@
 import type { QueryClient } from '@tanstack/react-query'
-import { createRootRouteWithContext, Outlet } from '@tanstack/react-router'
+import { createRootRouteWithContext, Outlet, useRouterState } from '@tanstack/react-router'
 import { lazy, Suspense } from 'react'
 import { Toaster } from 'sonner'
 import { NotFound } from '@/components/not-found'
 import { SiteFooter } from '@/components/site-footer'
 import { SiteHeader } from '@/components/site-header'
+import type { Auth } from '@/features/auth/session'
+import { LIVE_REGION_ID } from '@/lib/notify'
 
-export type RouterContext = { queryClient: QueryClient }
+export type RouterContext = { queryClient: QueryClient; auth: Auth }
 
 const Devtools = import.meta.env.DEV
   ? lazy(() =>
@@ -28,7 +30,11 @@ export const Route = createRootRouteWithContext<RouterContext>()({
   notFoundComponent: NotFound,
 })
 
+// Figma mobile de Login/Cadastro é tela cheia, sem header/footer.
+const AUTH_SCREENS = /^\/(login|register)\/?$/
+
 function RootLayout() {
+  const authScreen = useRouterState({ select: (s) => AUTH_SCREENS.test(s.location.pathname) })
   return (
     <>
       <a
@@ -38,13 +44,15 @@ function RootLayout() {
         Pular para o conteúdo
       </a>
       <div className="flex min-h-dvh flex-col">
-        <SiteHeader />
+        <SiteHeader className={authScreen ? 'max-lg:hidden' : undefined} />
         <main id="conteudo" tabIndex={-1} className="mx-auto w-full max-w-content flex-1 px-4 outline-none lg:px-0">
           <Outlet />
         </main>
-        <SiteFooter />
+        <SiteFooter className={authScreen ? 'max-lg:hidden' : undefined} />
       </div>
-      <Toaster theme="dark" richColors position="top-right" />
+      <div id={LIVE_REGION_ID} aria-live="polite" aria-atomic="true" className="sr-only" />
+      {/* Embaixo: no topo direito o toast cobria o botão Entrar/Sair do header. */}
+      <Toaster theme="dark" richColors position="bottom-right" />
       <Suspense>
         <Devtools />
       </Suspense>

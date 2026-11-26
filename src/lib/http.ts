@@ -13,6 +13,8 @@ declare module 'axios' {
   interface AxiosRequestConfig {
     /** Schema zod da resposta. Obrigatório para respostas com corpo (use `requestVoid` para 204). */
     schema?: z.ZodType
+    /** Não dispara o handler de sessão expirada (rotas de auth tratam o 401 elas mesmas). */
+    skipSessionExpiry?: boolean
   }
 }
 
@@ -59,6 +61,21 @@ export function setAuthTokenGetter(fn: () => string | null) {
   getAuthToken = fn
 }
 
+let onSessionExpired: ((token: string) => void) | null = null
+/**
+ * Chamado quando uma requisição autenticada recebe SESSION_EXPIRED/UNAUTHENTICATED.
+ * Recebe o token USADO na requisição: a auth ignora se ele já não é o atual (resposta atrasada de outra sessão).
+ */
+export function setSessionExpiredHandler(fn: ((token: string) => void) | null) {
+  onSessionExpired = fn
+}
+
+const bearerOf = (config: AxiosRequestConfig | undefined): string | null => {
+  const header = config?.headers?.Authorization ?? config?.headers?.authorization
+  const match = typeof header === 'string' ? /^Bearer\s+(.+)$/i.exec(header) : null
+  return match?.[1] ?? null
+}
+
 http.interceptors.request.use((config) => {
   const token = getAuthToken()
   if (token && !config.headers.has('Authorization')) config.headers.set('Authorization', `Bearer ${token}`)
@@ -82,7 +99,17 @@ http.interceptors.response.use(
   },
   (error: unknown) => {
     if (isCancel(error)) throw error
-    throw normalizeError(error)
+    const normalized = normalizeError(error)
+    const config = isAxiosError(error) ? error.config : undefined
+    const token = bearerOf(config)
+    if (
+      token &&
+      !config?.skipSessionExpiry &&
+      (normalized.code === 'SESSION_EXPIRED' || normalized.code === 'UNAUTHENTICATED')
+    ) {
+      onSessionExpired?.(token)
+    }
+    throw normalized
   },
 )
 

@@ -1,4 +1,9 @@
-import { Link, useRouterState } from '@tanstack/react-router'
+import { Link, useNavigate, useRouterState } from '@tanstack/react-router'
+import { LogOut } from 'lucide-react'
+import { useCurrentUser } from '@/features/auth/hooks'
+import { useLogoutMutation } from '@/features/auth/queries'
+import { firstName } from '@/features/auth/session'
+import { notify } from '@/lib/notify'
 import { cn } from '@/lib/utils'
 
 /**
@@ -7,12 +12,14 @@ import { cn } from '@/lib/utils'
  * escopo do desafio e aparecem como indisponíveis (invariante 10).
  */
 
+const HOME_SECTION = /^\/(login|register|profile|wallets)?\/?$/
 const MARKET_FLOW = /^\/(nft|cart|checkout|orders)(\/|$)/
 
 function useActiveSection(): 'home' | 'market' | null {
   const pathname = useRouterState({ select: (s) => s.location.pathname })
   if (MARKET_FLOW.test(pathname)) return 'market'
-  if (pathname === '/') return 'home'
+  // Figma: "Início" ativo também em Entrar, Criar conta, Perfil e Carteiras.
+  if (HOME_SECTION.test(pathname)) return 'home'
   return null
 }
 
@@ -21,12 +28,13 @@ const navLink =
 const activeLink =
   'font-bold text-brand after:absolute after:inset-x-0 after:bottom-0 after:h-[3px] after:rounded-full after:bg-primary'
 
-export function SiteHeader() {
+export function SiteHeader({ className }: { className?: string }) {
   const active = useActiveSection()
+  const pathname = useRouterState({ select: (s) => s.location.pathname })
   const isMarket = active === 'market'
 
   return (
-    <header className="mx-auto w-full max-w-content px-4 pt-6 lg:px-0">
+    <header className={cn("mx-auto w-full max-w-content px-4 pt-6 lg:px-0", className)}>
       <div
         className={cn(
           'flex items-center justify-between gap-4 lg:items-start lg:gap-6',
@@ -48,7 +56,7 @@ export function SiteHeader() {
               <Link
                 to="/"
                 className={cn(navLink, active === 'home' ? activeLink : 'font-normal text-foreground hover:text-brand')}
-                aria-current={active === 'home' ? 'page' : undefined}
+                aria-current={pathname === '/' ? 'page' : undefined}
               >
                 Início
               </Link>
@@ -94,15 +102,60 @@ export function SiteHeader() {
             {/* O badge com a contagem entra quando o carrinho existir; nada de número falso. */}
             <img src="/assets/icons/cart.svg" alt="" width={24} height={24} />
           </Link>
-          <Link
-            to="/login"
-            className="inline-flex h-[35px] items-center justify-center gap-1 rounded-md bg-primary px-3 text-base font-medium text-primary-foreground outline-none hover:bg-primary/90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background lg:w-[100px] lg:px-0"
-          >
-            <img src="/assets/icons/login.svg" alt="" width={18} height={17} className="m-px" />
-            Entrar
-          </Link>
+          <AccountActions />
         </div>
       </div>
     </header>
+  )
+}
+
+const primaryAction =
+  'inline-flex h-[35px] items-center justify-center gap-1 rounded-md bg-primary px-3 text-base font-medium text-primary-foreground outline-none hover:bg-primary/90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:opacity-70 lg:min-w-[100px]'
+
+/** "Entrar" (Figma) para convidado; perfil + "Sair" para usuário logado (estado não desenhado no Figma). */
+function AccountActions() {
+  const user = useCurrentUser()
+  const logout = useLogoutMutation()
+  const navigate = useNavigate()
+  const onProtected = useRouterState({ select: (s) => s.matches.some((m) => m.routeId === '/_auth') })
+
+  if (!user) {
+    return (
+      <Link to="/login" className={primaryAction}>
+        <img src="/assets/icons/login.svg" alt="" width={18} height={17} className="m-px" />
+        Entrar
+      </Link>
+    )
+  }
+
+  const onLogout = async () => {
+    // Sai da rota protegida ANTES de encerrar a sessão: a navegação nova cancela qualquer `beforeLoad`
+    // pendente (ex.: revalidação logo após o login), que senão mandaria para /login?redirect=…
+    if (onProtected) await navigate({ to: '/', replace: true })
+    await logout.mutateAsync()
+    notify.success('Você saiu da conta.')
+  }
+
+  return (
+    <div className="flex items-center gap-3">
+      <Link
+        to="/profile"
+        className="flex items-center gap-2 rounded-md text-sm outline-none hover:text-brand focus-visible:ring-2 focus-visible:ring-ring"
+        activeProps={{ 'aria-current': 'page' }}
+        aria-label={`Meu perfil (${user.name})`}
+      >
+        <span
+          aria-hidden="true"
+          className="grid size-8 place-items-center rounded-full bg-surface-dark text-sm font-bold text-brand"
+        >
+          {user.name.trim().charAt(0).toUpperCase()}
+        </span>
+        <span className="hidden max-w-[10ch] truncate xl:inline">{firstName(user)}</span>
+      </Link>
+      <button type="button" onClick={() => void onLogout()} disabled={logout.isPending} className={primaryAction}>
+        <LogOut className="size-[18px]" aria-hidden />
+        Sair
+      </button>
+    </div>
   )
 }
