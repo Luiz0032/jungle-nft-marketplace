@@ -368,7 +368,7 @@ Fixtures: ≥ 40 NFTs (filtros/paginação), 2 usuários (`ana@jungle.test` / `S
 - Tab Bar mobile do Figma (`70395:245`) não implementada; mobile usa header compacto + footer empilhado.
 - Figma não tem mobile para Confirmação, Perfil e Carteiras: adaptados do desktop com os mesmos tokens (cartão de largura total; sidebar da conta vira faixa no topo).
 - Comparação visual da Sessão 9 feita contra PNGs exportados manualmente (`design/ref/`, fora do git): o Figma MCP segue no limite do plano Starter.
-- **Performance mobile do Lighthouse abaixo de 90** (82 na home, 66 no detalhe, mediana de 3 runs). O backend mock roda no navegador e fica no caminho crítico do LCP; ver §13.
+- **Performance mobile do Lighthouse abaixo de 90 só no `pnpm preview` local** (85/85, mediana de 3 runs). Na demo pública fica em 95/95. O backend mock roda no navegador e fica no caminho crítico do LCP, e o preview local não tem a compressão da CDN; ver §13.
 - Sem SSR/pré-renderização: crawlers sem JS veem só o `<title>`/`description` padrão do `index.html`; os específicos de cada rota (`usePageMeta`) aparecem depois do JS.
 - Os dados da demo vivem no `localStorage` de cada navegador (banco mock). Não há estado compartilhado entre dispositivos, e limpar os dados do site volta ao seed. Cadastros só existem naquele navegador.
 - Tempo real só existe dentro da mesma aba: o servidor Socket.IO mock roda na página, então uma compra em outra aba ou dispositivo não gera evento aqui. Para ver mudança de preço/estoque, use os cenários (`price-change`, `sold-out`) ou `window.__mock.updateEdition`.
@@ -376,28 +376,53 @@ Fixtures: ≥ 40 NFTs (filtros/paginação), 2 usuários (`ana@jungle.test` / `S
 - Regressão visual compara só em Linux (baselines da imagem oficial do Playwright); no Windows/macOS os 8 testes `@visual` são pulados.
 
 ## 13. Performance e Lighthouse
-**Como medir:** `pnpm lhci` (`scripts/lhci.mjs`). Faz o build, sobe o `pnpm preview` e roda `@lhci/cli` em `/` e `/nft/nft-001`, nos perfis **mobile** (padrão do Lighthouse: Moto G Power emulado, 4G lento simulado a 150 ms RTT / 1,6 Mbps, CPU 4×) e **desktop** (`preset=desktop`), 3 runs cada. Grava HTML+JSON de todos os runs em `lighthouse/reports/{mobile,desktop}/` (com `manifest.json`) e as medianas em `lighthouse/reports/summary.{md,json}`. Asserções (`lighthouse/lighthouserc.json`, mediana): Perf ≥ 0,90, A11y ≥ 0,95, BP ≥ 0,95, SEO ≥ 0,90. O script sai com código 1 se alguma falhar. `--no-build` reaproveita o `dist/`; `--summary-only` só refaz o resumo.
+**Como medir:** `pnpm lhci` (`scripts/lhci.mjs`). Faz o build, sobe o `pnpm preview` e roda `@lhci/cli` em `/` e `/nft/nft-001`, nos perfis **mobile** (padrão do Lighthouse: Moto G Power emulado, 4G lento simulado a 150 ms RTT / 1,6 Mbps, CPU 4×) e **desktop** (`preset=desktop`), 3 runs cada. Grava HTML+JSON de todos os runs em `lighthouse/reports/{mobile,desktop}/` (com `manifest.json`) e as medianas em `lighthouse/reports/summary.{md,json}`. `pnpm lhci:prod` faz o mesmo contra a demo pública (`lighthouse/lighthouserc.prod.json`, sem build nem servidor local) e grava em `lighthouse/reports/prod/`. Asserções (mediana): Perf ≥ 0,90, A11y ≥ 0,95, BP ≥ 0,95, SEO ≥ 0,90; o script sai com código 1 se alguma falhar. `--no-build` reaproveita o `dist/`; `--summary-only` só refaz o resumo.
+
+São duas medições porque medem coisas diferentes:
+- **Local** (`pnpm preview`): reprodutível por quem clona o repo, mas o `vite preview` serve só gzip, sem CDN.
+- **Produção** (Vercel): o que o avaliador abre. A CDN serve Brotli e HTTP/2 a partir do edge, o que encurta a transferência dos chunks.
+
+Nas duas, o Lighthouse roda na mesma máquina (abaixo), com throttling **simulado** (Lantern, padrão do Lighthouse), storage limpo a cada run (o MSW instala o service worker e faz o seed toda vez), mocks ligados e cenário `default` (latência simulada de 150–400 ms por chamada `/api`).
+
+Ambiente: Node 24.21.0 · Lighthouse 13.6.0 (`@lhci/cli` 0.16.1) · Chrome 158.0.8127.88 headless · Windows 11 Pro (10.0.26300) x64 · AMD Ryzen 7 5700X (8 núcleos/16 threads) · 32 GB RAM · `benchmarkIndex` ≈ 3000 · 26–27/11/2026. Produção medida pela internet residencial da mesma máquina (o Lantern simula a rede a partir do RTT observado).
 
 **Resultado versionado** (mediana de 3 runs; entre parênteses o Perf de cada run):
 
-| Perfil | Página | Perf | A11y | BP | SEO | LCP | CLS | TBT |
-|---|---|---|---|---|---|---|---|---|
-| mobile | `/` | **82** (82 / 82 / 82) | 100 | 100 | 100 | 4,74 s | 0 | 125 ms |
-| mobile | `/nft/nft-001` | **66** (83 / 66 / 63) | 100 | 100 | 100 | 4,68 s | 0 | 689 ms |
-| desktop | `/` | **98** | 100 | 100 | 100 | 1,17 s | 0 | 0 ms |
-| desktop | `/nft/nft-001` | **99** | 100 | 100 | 100 | 1,03 s | 0 | 0 ms |
+| Alvo | Perfil | Página | Perf | A11y | BP | SEO | LCP | CLS | TBT |
+|---|---|---|---|---|---|---|---|---|---|
+| local | mobile | `/` | **85** (85 / 85 / 85) | 100 | 100 | 100 | 4,28 s | 0 | 111 ms |
+| local | mobile | `/nft/nft-001` | **85** (74 / 86 / 85) | 100 | 100 | 100 | 4,20 s | 0 | 131 ms |
+| local | desktop | `/` | **98** | 100 | 100 | 100 | 1,04 s | 0 | 0 ms |
+| local | desktop | `/nft/nft-001` | **99** | 100 | 100 | 100 | 0,95 s | 0 | 0 ms |
+| produção | mobile | `/` | **95** (76 / 95 / 95) | 100 | 100 | 100 | 2,73 s | 0 | 132 ms |
+| produção | mobile | `/nft/nft-001` | **95** (95 / 91 / 96) | 100 | 100 | 100 | 2,66 s | 0 | 112 ms |
+| produção | desktop | `/` | **100** | 100 | 100 | 100 | 0,58 s | 0 | 0 ms |
+| produção | desktop | `/nft/nft-001` | **100** | 100 | 100 | 100 | 0,56 s | 0 | 0 ms |
 
-Ambiente: Node 24.21.0 · Lighthouse 13.6.0 (`@lhci/cli` 0.16.1) · Chrome 158.0.8127.88 headless · Windows 11 Pro (10.0.26300) x64 · AMD Ryzen 7 5700X (8 núcleos/16 threads) · 32 GB RAM · `benchmarkIndex` ≈ 2800 · 26/11/2026. Servidor: `vite preview` local (gzip, sem CDN), mocks ligados, cenário `default` (latência simulada de 150–400 ms por chamada `/api`), storage limpo a cada run (o MSW instala o service worker e faz o seed toda vez). Throttling **simulado** (Lantern), padrão do Lighthouse.
+**Antes × depois do enxugamento do chunk do mock** (mobile, mediana):
+
+| Alvo | Página | Antes | Depois |
+|---|---|---|---|
+| local | `/` | 82 · LCP 4,74 s · TBT 125 ms | 85 · LCP 4,28 s · TBT 111 ms |
+| local | `/nft/nft-001` | 66 (83 / 66 / 63) · LCP 4,68 s · TBT 689 ms | 85 (74 / 86 / 85) · LCP 4,20 s · TBT 131 ms |
+| produção | `/` | 93 (93 / 91 / 93) · LCP 2,91 s · TBT 169 ms | 95 (76 / 95 / 95) · LCP 2,73 s · TBT 132 ms |
+| produção | `/nft/nft-001` | 78 (78 / 68 / 80) · LCP 2,87 s · TBT 685 ms | 95 (95 / 91 / 96) · LCP 2,66 s · TBT 112 ms |
+
+Desktop já passava antes (local 98/99; produção 100/100).
 
 **Otimizações aplicadas** (valem para usuários reais, não só para o teste):
+- **Chunk do mock de 174 kB para 60 kB gzip** (469 → 199 kB de fonte). Medindo o chunk por sourcemap, o código do próprio mock (handlers, banco, fixtures, servidor socket) somava só 27 kB; 258 kB eram do `tldts`, a Public Suffix List inteira, puxada pelo `tough-cookie` que o MSW usa no cookie store. Nem a app nem o mock usam cookies (a sessão é Bearer token), então `vite.config.ts` troca o `tldts` por `src/mocks/lib/tldts-lite.ts`, que usa a heurística "dois últimos rótulos". Efeito colateral aceito: o cookie store do MSW não reconhece sufixos privados (`vercel.app`). Só o `tough-cookie` importa o `tldts`. Se um dia o mock usar cookies, basta remover o alias.
 - `modulepreload` do grafo da app durante o boot do MSW (§2). Antes, o navegador só descobria os chunks da app quando o worker terminava. Mobile foi de 72/62 para 82/83 nos melhores runs, e o TBT caiu de 561/1268 ms para ~120 ms.
 - Skeleton do detalhe com a mesma geometria do conteúdo: CLS desktop do detalhe de 0,155 para 0.
 - Slider de preço com 24 px de altura de alvo (WCAG 2.5.8, `target-size`), sem mudar o layout: A11y desktop da home de 97 para 100.
 - Já existiam: imagens com `width`/`height` e `srcset` 400w/800w; `loading="lazy"` fora da dobra; `fetchpriority="high"` na arte do hero e na imagem principal do detalhe; preload da fonte self-host (woff2 variável, subset latin, `font-display: swap`); code-splitting por rota (`autoCodeSplitting`); devtools só em dev.
 - SEO: `lang="pt-BR"`, `<title>` e `meta description` por rota (`usePageMeta`), `robots.txt`. Sem erros no console (auditoria `errors-in-console` passa).
 
-**Abaixo da meta: Performance mobile (82 na home, 66 no detalhe).** Desktop passa com folga, e A11y, BP e SEO ficam em 100 nos dois perfis. As causas medidas:
-1. **O backend roda no navegador.** O chunk do mock (`src/mocks/browser`) tem 469 kB (174 kB gzip): `msw` (228 kB de fonte), mais `tough-cookie` e `tldts` (dependências internas do MSW para cookies, ~270 kB de fonte), `@mswjs/interceptors` e os handlers. Ele precisa ser baixado, executado e registrar o service worker **antes** da primeira chamada `/api`, porque o MSW é obrigatório na stack e a demo pública usa mocks. A 1,6 Mbps simulados isso custa cerca de 0,9 s só de transferência, na frente da cadeia do LCP: `index` → mock → app → chunk da rota → `GET /api/...` (150–400 ms simulados) → imagem. Com backend real, esse chunk e a latência simulada saem do caminho crítico.
+**Tentado e revertido: renderizar o shell sem esperar o `worker.start()`.** A app era importada em paralelo com o mock. O Axios aguardava uma promise de prontidão num interceptor, e o socket importava o `socket.io-client` só depois dela, porque o engine.io captura o `WebSocket` na avaliação do módulo. A/B local, mobile, os dois já com o chunk enxuto: `/` 87 → 85 (LCP 4,01 → 4,17 s); detalhe 81 → 86, com runs 84/76/81 contra 87/84/86. A diferença ficou dentro da dispersão entre runs, e o LCP não melhorou. A imagem LCP depende da resposta da API, que de todo jeito espera o worker. Pelo critério "sem ganho, reverte", voltou ao boot sequencial, que é mais simples (connect síncrono do socket, sem barreira no cliente HTTP). Separar fixtures e handlers de socket do chunk inicial também foi descartado: somam poucos kB, e o worker precisa de todos antes da primeira resposta.
+
+**Abaixo da meta: Performance mobile só na medição local (85/85).** Na demo pública o mobile passa (95/95) e o desktop passa com folga nos dois alvos; A11y, BP e SEO ficam em 100 em todas as medições. A diferença local × produção é a entrega: Brotli e HTTP/2 da CDN contra gzip do `vite preview`, com o LCP caindo de ~4,2 s para ~2,7 s. O que segura o mobile local:
+1. **O backend roda no navegador.** Mesmo enxuto, o chunk do mock (`msw` ~100 kB de fonte, `@mswjs/interceptors`, `tough-cookie`, handlers) precisa ser baixado, executado e registrar o service worker **antes** da primeira chamada `/api`. O MSW é obrigatório na stack e a demo pública usa mocks. Cadeia do LCP: `index` → mock → app → chunk da rota → `GET /api/...` (150–400 ms simulados) → imagem. Com backend real, esse chunk e a latência simulada saem do caminho crítico.
 2. **LCP depende de dado.** A imagem LCP (hero na home, arte do NFT no detalhe) só é conhecida depois do JSON da API. É uma SPA estática (sem SSR/SSG na stack), então não dá para pré-renderizar o HTML com a imagem. Um `preload` fixo no `index.html` baixaria uma arte errada nas outras rotas.
-3. **Dispersão no detalhe mobile** (83 / 66 / 63). Os runs ruins têm uma tarefa longa sem atribuição a script perto de 0,7 s simulados (131–874 ms depois do multiplicador de CPU 4×). No trace ela aparece sem nenhum evento-filho de JS, layout ou parse: é trabalho nativo do Chrome. Num build A/B com mocks desligados ela também aparece (119–156 ms simulados), mas menor. O resto da página é estável: LCP de 4,65–4,71 s nos 3 runs.
+3. **Dispersão entre runs.** Antes do alias, os runs ruins do detalhe tinham uma tarefa longa sem atribuição a script (trabalho nativo do Chrome, sem eventos-filho de JS, layout ou parse no trace), de 131 a 874 ms. Com o chunk enxuto o TBT mediano caiu para ~130 ms, mas ainda aparece um run fora da curva (74 no local).
+
 Medidas que não adotamos por serem truques só para o teste: desligar o MSW no build medido, servir dados embutidos no HTML, pré-carregar no `index.html` uma imagem que só serve a uma rota.

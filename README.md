@@ -82,7 +82,8 @@ Outros controles no console (`window.__mock`): `getScenario()`, `updateEdition(e
 | `pnpm test:slow` | skeletons e recuperação com relógio controlado (`@slow`) |
 | `pnpm test:visual` | regressão visual (`@visual`). Compara só em Linux; em outros sistemas os testes são pulados |
 | `pnpm test:visual:update` | regenera as baselines visuais em Docker (imagem oficial do Playwright) |
-| `pnpm lhci` | build + Lighthouse CI em `/` e `/nft/nft-001`, mobile e desktop, 3 runs cada |
+| `pnpm lhci` | build + Lighthouse CI em `/` e `/nft/nft-001`, mobile e desktop, 3 runs cada, contra o `pnpm preview` local |
+| `pnpm lhci:prod` | o mesmo contra a demo pública na Vercel (sem build) |
 
 ## Reproduzir os fluxos de falha
 Use a demo pública ou `pnpm dev`. Para começar do zero, abra antes `/?reset=1`. "Entrar" é com `ana@jungle.test` / `Senha@123`.
@@ -101,4 +102,4 @@ Outros: `?scenario=slow` (skeletons), `?scenario=flaky` / `?scenario=offline` (e
 
 ## Relatórios
 - **Playwright:** relatório HTML em `playwright-report/` depois de `pnpm test:e2e` (`pnpm exec playwright show-report`). Traces e anexos das falhas ficam em `test-results/`. No CI (GitHub Actions → workflow **E2E**), o relatório é publicado em todo run como artifact `playwright-report`, e os traces das falhas como `playwright-traces`. Baselines visuais em `e2e/__screenshots__/`.
-- **Lighthouse:** `lighthouse/reports/mobile/` e `lighthouse/reports/desktop/` (HTML + JSON de cada run, com `manifest.json`); medianas e ambiente em `lighthouse/reports/summary.md`. Resultados e análise em [ARCHITECTURE.md §13](ARCHITECTURE.md#13-performance-e-lighthouse).
+- **Lighthouse:** medição local em `lighthouse/reports/mobile/` e `lighthouse/reports/desktop/`, da demo pública em `lighthouse/reports/prod/{mobile,desktop}/` (HTML + JSON de cada run, com `manifest.json`); medianas e ambiente em `lighthouse/reports/summary.md` e `lighthouse/reports/prod/summary.md`. Resultados e análise em [ARCHITECTURE.md §13](ARCHITECTURE.md#13-performance-e-lighthouse).

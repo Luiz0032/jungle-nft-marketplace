@@ -1,0 +1,80 @@
+[
+  {
+    "url": "https://jungle-nft-marketplace-gamma.vercel.app/",
+    "isRepresentativeRun": false,
+    "htmlPath": "lighthouse/reports/prod/mobile/home-2026_11_27_01_03_08.report.html",
+    "jsonPath": "lighthouse/reports/prod/mobile/home-2026_11_27_01_03_08.report.json",
+    "summary": {
+      "performance": 0.76,
+      "accessibility": 1,
+      "best-practices": 1,
+      "seo": 1,
+      "agentic-browsing": 0.5
+    }
+  },
+  {
+    "url": "https://jungle-nft-marketplace-gamma.vercel.app/",
+    "isRepresentativeRun": false,
+    "htmlPath": "lighthouse/reports/prod/mobile/home-2026_11_27_01_03_35.report.html",
+    "jsonPath": "lighthouse/reports/prod/mobile/home-2026_11_27_01_03_35.report.json",
+    "summary": {
+      "performance": 0.95,
+      "accessibility": 1,
+      "best-practices": 1,
+      "seo": 1,
+      "agentic-browsing": 0.5
+    }
+  },
+  {
+    "url": "https://jungle-nft-marketplace-gamma.vercel.app/nft/nft-001",
+    "isRepresentativeRun": false,
+    "htmlPath": "lighthouse/reports/prod/mobile/nft_nft_001-2026_11_27_01_03_48.report.html",
+    "jsonPath": "lighthouse/reports/prod/mobile/nft_nft_001-2026_11_27_01_03_48.report.json",
+    "summary": {
+      "performance": 0.95,
+      "accessibility": 1,
+      "best-practices": 1,
+      "seo": 1,
+      "agentic-browsing": 0.5
+    }
+  },
+  {
+    "url": "https://jungle-nft-marketplace-gamma.vercel.app/nft/nft-001",
+    "isRepresentativeRun": false,
+    "htmlPath": "lighthouse/reports/prod/mobile/nft_nft_001-2026_11_27_01_04_14.report.html",
+    "jsonPath": "lighthouse/reports/prod/mobile/nft_nft_001-2026_11_27_01_04_14.report.json",
+    "summary": {
+      "performance": 0.91,
+      "accessibility": 1,
+      "best-practices": 1,
+      "seo": 1,
+      "agentic-browsing": 0.5
+    }
+  },
+  {
+    "url": "https://jungle-nft-marketplace-gamma.vercel.app/",
+    "isRepresentativeRun": true,
+    "htmlPath": "lighthouse/reports/prod/mobile/home-2026_11_27_01_03_22.report.html",
+    "jsonPath": "lighthouse/reports/prod/mobile/home-2026_11_27_01_03_22.report.json",
+    "summary": {
+      "performance": 0.95,
+      "accessibility": 1,
+      "best-practices": 1,
+      "seo": 1,
+      "agentic-browsing": 0.5
+    }
+  },
+  {
+    "url": "https://jungle-nft-marketplace-gamma.vercel.app/nft/nft-001",
+    "isRepresentativeRun": true,
+    "htmlPath": "lighthouse/reports/prod/mobile/nft_nft_001-2026_11_27_01_04_01.report.html",
+    "jsonPath": "lighthouse/reports/prod/mobile/nft_nft_001-2026_11_27_01_04_01.report.json",
+    "summary": {
+      "performance": 0.96,
+      "accessibility": 1,
+      "best-practices": 1,
+      "seo": 1,
+      "agentic-browsing": 0.5
+    }
+  }
+]

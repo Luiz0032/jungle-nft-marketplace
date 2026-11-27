@@ -1,0 +1,83 @@
+{
+  "environment": {
+    "target": "Vercel (produção, CDN)",
+    "date": "2026-11-27T01:03:08.576Z",
+    "node": "v24.21.0",
+    "lighthouse": "13.6.0",
+    "chrome": "158.0.8127.88",
+    "benchmarkIndex": 3190,
+    "os": "Windows_NT 10.0.26300 x64",
+    "cpu": "AMD Ryzen 7 5700X 8-Core Processor (16 threads)",
+    "memoryGb": 32
+  },
+  "rows": [
+    {
+      "profile": "mobile",
+      "page": "/",
+      "perfRuns": [
+        76,
+        95,
+        95
+      ],
+      "performance": 95,
+      "accessibility": 100,
+      "best-practices": 100,
+      "seo": 100,
+      "lcpMs": 2727,
+      "cls": 0,
+      "tbtMs": 132,
+      "fcpMs": 848
+    },
+    {
+      "profile": "mobile",
+      "page": "/nft/nft-001",
+      "perfRuns": [
+        95,
+        91,
+        96
+      ],
+      "performance": 95,
+      "accessibility": 100,
+      "best-practices": 100,
+      "seo": 100,
+      "lcpMs": 2663,
+      "cls": 0,
+      "tbtMs": 112,
+      "fcpMs": 801
+    },
+    {
+      "profile": "desktop",
+      "page": "/",
+      "perfRuns": [
+        100,
+        100,
+        100
+      ],
+      "performance": 100,
+      "accessibility": 100,
+      "best-practices": 100,
+      "seo": 100,
+      "lcpMs": 578,
+      "cls": 0,
+      "tbtMs": 0,
+      "fcpMs": 232
+    },
+    {
+      "profile": "desktop",
+      "page": "/nft/nft-001",
+      "perfRuns": [
+        100,
+        100,
+        100
+      ],
+      "performance": 100,
+      "accessibility": 100,
+      "best-practices": 100,
+      "seo": 100,
+      "lcpMs": 563,
+      "cls": 0,
+      "tbtMs": 0,
+      "fcpMs": 226
+    }
+  ]
+}
