@@ -46,7 +46,11 @@ export default defineConfig({
     preloadAppGraph(),
   ],
   resolve: {
-    alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
+    alias: [
+      { find: '@', replacement: fileURLToPath(new URL('./src', import.meta.url)) },
+      // Só o tough-cookie (cookie store do MSW) importa o tldts; ver src/mocks/lib/tldts-lite.ts.
+      { find: /^tldts$/, replacement: fileURLToPath(new URL('./src/mocks/lib/tldts-lite.ts', import.meta.url)) },
+    ],
   },
   server: { port: 5173 },
   preview: { port: 4173 },

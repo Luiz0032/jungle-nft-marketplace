@@ -2,14 +2,18 @@
 // Relatórios HTML+JSON de todos os runs em lighthouse/reports/<perfil>/ e o resumo de medianas
 // em lighthouse/reports/summary.{md,json}. `--no-build` reaproveita o dist/ existente;
 // `--summary-only` só refaz o resumo a partir dos relatórios já gravados.
+// `--prod` mede a demo pública (lighthouse/lighthouserc.prod.json) em vez do preview local; não faz build
+// e grava em lighthouse/reports/prod/.
 import { spawnSync } from 'node:child_process'
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 
 const ROOT = path.resolve(import.meta.dirname, '..')
-const REPORTS = path.join(ROOT, 'lighthouse', 'reports')
-const CONFIG = 'lighthouse/lighthouserc.json'
+const PROD = process.argv.includes('--prod')
+const REPORTS_REL = PROD ? 'lighthouse/reports/prod' : 'lighthouse/reports'
+const REPORTS = path.join(ROOT, REPORTS_REL)
+const CONFIG = PROD ? 'lighthouse/lighthouserc.prod.json' : 'lighthouse/lighthouserc.json'
 const PROFILES = [
   { name: 'mobile', collectArgs: [] },
   { name: 'desktop', collectArgs: ['--settings.preset=desktop'] },
@@ -22,14 +26,14 @@ function run(cmd, args) {
 }
 
 const summaryOnly = process.argv.includes('--summary-only')
-if (!summaryOnly && !process.argv.includes('--no-build') && run('pnpm', ['build']) !== 0) process.exit(1)
+if (!summaryOnly && !PROD && !process.argv.includes('--no-build') && run('pnpm', ['build']) !== 0) process.exit(1)
 
-if (!summaryOnly) fs.rmSync(REPORTS, { recursive: true, force: true })
+for (const p of summaryOnly ? [] : PROFILES) fs.rmSync(path.join(REPORTS, p.name), { recursive: true, force: true })
 let failed = false
 for (const p of summaryOnly ? [] : PROFILES) {
   fs.rmSync(path.join(ROOT, '.lighthouseci'), { recursive: true, force: true })
   if (run('pnpm', ['exec', 'lhci', 'collect', `--config=${CONFIG}`, ...p.collectArgs]) !== 0) process.exit(1)
-  run('pnpm', ['exec', 'lhci', 'upload', `--config=${CONFIG}`, `--outputDir=lighthouse/reports/${p.name}`])
+  run('pnpm', ['exec', 'lhci', 'upload', `--config=${CONFIG}`, `--outputDir=${REPORTS_REL}/${p.name}`])
   tidyManifest(path.join(REPORTS, p.name))
   if (run('pnpm', ['exec', 'lhci', 'assert', `--config=${CONFIG}`]) !== 0) failed = true
 }
@@ -86,6 +90,7 @@ function chromeVersion() {
   return out.stdout?.match(/version\s+REG_SZ\s+([\d.]+)/)?.[1]
 }
 const environment = {
+  target: PROD ? 'Vercel (produção, CDN)' : 'pnpm preview (localhost:4173)',
   date: env.fetchTime,
   node: process.version,
   lighthouse: env.lighthouseVersion,
@@ -105,7 +110,7 @@ const md = [
       `| ${r.profile} | \`${r.page}\` | ${r.performance} (${r.perfRuns.join(' / ')}) | ${r.accessibility} | ${r['best-practices']} | ${r.seo} | ${(r.lcpMs / 1000).toFixed(2)} s | ${r.cls} | ${r.tbtMs} ms | ${(r.fcpMs / 1000).toFixed(2)} s |`,
   ),
   '',
-  `Node ${environment.node} · Lighthouse ${environment.lighthouse} · Chrome ${environment.chrome} · ${environment.os} · ${environment.cpu} · ${environment.memoryGb} GB · benchmarkIndex ${environment.benchmarkIndex} · ${environment.date}`,
+  `Alvo: ${environment.target} · Node ${environment.node} · Lighthouse ${environment.lighthouse} · Chrome ${environment.chrome} · ${environment.os} · ${environment.cpu} · ${environment.memoryGb} GB · benchmarkIndex ${environment.benchmarkIndex} · ${environment.date}`,
   '',
 ].join('\n')
 fs.writeFileSync(path.join(REPORTS, 'summary.md'), md)

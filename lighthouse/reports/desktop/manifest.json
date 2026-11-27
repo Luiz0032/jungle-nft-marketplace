@@ -2,8 +2,8 @@
   {
     "url": "http://localhost:4173/",
     "isRepresentativeRun": false,
-    "htmlPath": "lighthouse/reports/desktop/home-2026_11_26_22_42_02.report.html",
-    "jsonPath": "lighthouse/reports/desktop/home-2026_11_26_22_42_02.report.json",
+    "htmlPath": "lighthouse/reports/desktop/home-2026_11_27_00_51_06.report.html",
+    "jsonPath": "lighthouse/reports/desktop/home-2026_11_27_00_51_06.report.json",
     "summary": {
       "performance": 0.98,
       "accessibility": 1,
@@ -15,21 +15,8 @@
   {
     "url": "http://localhost:4173/",
     "isRepresentativeRun": false,
-    "htmlPath": "lighthouse/reports/desktop/home-2026_11_26_22_42_29.report.html",
-    "jsonPath": "lighthouse/reports/desktop/home-2026_11_26_22_42_29.report.json",
-    "summary": {
-      "performance": 0.98,
-      "accessibility": 1,
-      "best-practices": 1,
-      "seo": 1,
-      "agentic-browsing": 0.5
-    }
-  },
-  {
-    "url": "http://localhost:4173/nft/nft-001",
-    "isRepresentativeRun": false,
-    "htmlPath": "lighthouse/reports/desktop/nft_nft_001-2026_11_26_22_42_42.report.html",
-    "jsonPath": "lighthouse/reports/desktop/nft_nft_001-2026_11_26_22_42_42.report.json",
+    "htmlPath": "lighthouse/reports/desktop/home-2026_11_27_00_51_33.report.html",
+    "jsonPath": "lighthouse/reports/desktop/home-2026_11_27_00_51_33.report.json",
     "summary": {
       "performance": 0.99,
       "accessibility": 1,
@@ -41,8 +28,21 @@
   {
     "url": "http://localhost:4173/nft/nft-001",
     "isRepresentativeRun": false,
-    "htmlPath": "lighthouse/reports/desktop/nft_nft_001-2026_11_26_22_43_08.report.html",
-    "jsonPath": "lighthouse/reports/desktop/nft_nft_001-2026_11_26_22_43_08.report.json",
+    "htmlPath": "lighthouse/reports/desktop/nft_nft_001-2026_11_27_00_51_46.report.html",
+    "jsonPath": "lighthouse/reports/desktop/nft_nft_001-2026_11_27_00_51_46.report.json",
+    "summary": {
+      "performance": 0.99,
+      "accessibility": 1,
+      "best-practices": 1,
+      "seo": 1,
+      "agentic-browsing": 0.5
+    }
+  },
+  {
+    "url": "http://localhost:4173/nft/nft-001",
+    "isRepresentativeRun": false,
+    "htmlPath": "lighthouse/reports/desktop/nft_nft_001-2026_11_27_00_51_59.report.html",
+    "jsonPath": "lighthouse/reports/desktop/nft_nft_001-2026_11_27_00_51_59.report.json",
     "summary": {
       "performance": 0.99,
       "accessibility": 1,
@@ -54,8 +54,8 @@
   {
     "url": "http://localhost:4173/",
     "isRepresentativeRun": true,
-    "htmlPath": "lighthouse/reports/desktop/home-2026_11_26_22_42_16.report.html",
-    "jsonPath": "lighthouse/reports/desktop/home-2026_11_26_22_42_16.report.json",
+    "htmlPath": "lighthouse/reports/desktop/home-2026_11_27_00_51_20.report.html",
+    "jsonPath": "lighthouse/reports/desktop/home-2026_11_27_00_51_20.report.json",
     "summary": {
       "performance": 0.98,
       "accessibility": 1,
@@ -67,8 +67,8 @@
   {
     "url": "http://localhost:4173/nft/nft-001",
     "isRepresentativeRun": true,
-    "htmlPath": "lighthouse/reports/desktop/nft_nft_001-2026_11_26_22_42_55.report.html",
-    "jsonPath": "lighthouse/reports/desktop/nft_nft_001-2026_11_26_22_42_55.report.json",
+    "htmlPath": "lighthouse/reports/desktop/nft_nft_001-2026_11_27_00_52_12.report.html",
+    "jsonPath": "lighthouse/reports/desktop/nft_nft_001-2026_11_27_00_52_12.report.json",
     "summary": {
       "performance": 0.99,
       "accessibility": 1,
