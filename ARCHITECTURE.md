@@ -375,7 +375,7 @@ Fixtures: ≥ 40 NFTs (filtros/paginação), 2 usuários (`ana@jungle.test` / `S
 - E2E só em Chromium (desktop 1440 e mobile 390); Firefox/WebKit não fazem parte da suíte.
 - Regressão visual compara só em Linux (baselines da imagem oficial do Playwright); no Windows/macOS os 8 testes `@visual` são pulados.
 - **Token de sessão em `localStorage`** (`jg:session`, `src/lib/storage.ts`), legível por qualquer script da página. Aceito porque o backend é mock no navegador. Em produção o token iria em cookie `httpOnly; Secure; SameSite`, emitido pelo servidor, com proteção CSRF.
-- **Sem Content-Security-Policy nem outros cabeçalhos de segurança**: o `vercel.json` só tem `rewrites`. A mitigação de XSS hoje é o próprio React (o `src/` não usa `dangerouslySetInnerHTML`, `innerHTML`, `eval`, `new Function` nem `target="_blank"`). Em produção: CSP restritiva (`script-src 'self'`, `connect-src` da API/socket), `X-Content-Type-Options`, `Referrer-Policy` e `frame-ancestors`. Ficou fora porque o MSW roda via service worker e a CSP precisaria de testes próprios.
+- **Sem Content-Security-Policy.** O `vercel.json` envia em todas as rotas só `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin` e `X-Frame-Options: DENY`. A mitigação de XSS hoje é o próprio React (o `src/` não usa `dangerouslySetInnerHTML`, `innerHTML`, `eval`, `new Function` nem `target="_blank"`). Em produção: CSP restritiva (`script-src 'self'`, `connect-src` da API/socket, `frame-ancestors 'none'`). Ficou fora porque o MSW roda via service worker e a CSP precisaria de testes próprios.
 - **`pnpm audit --prod` (2026-11-27): nenhuma vulnerabilidade conhecida** (0 info/low/moderate/high/critical em 144 dependências de produção).
 
 ## 13. Performance e Lighthouse
