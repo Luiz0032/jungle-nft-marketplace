@@ -20,7 +20,7 @@ export function NftCard({ nft, priority = false }: { nft: NftSummary; priority?:
       <div className="relative bg-surface px-[1.6%] pt-[12%] pb-[7.4%]">
         <img
           {...nftImageProps(nft.image, '(min-width: 1024px) 250px, 45vw')}
-          alt=""
+          alt={nft.imageAlt}
           width={250}
           height={250}
           loading={priority ? 'eager' : 'lazy'}

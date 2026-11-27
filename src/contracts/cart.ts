@@ -11,6 +11,7 @@ export const CartItemSchema = z.object({
   title: z.string(),
   editionLabel: z.string(),
   image: z.string().min(1),
+  imageAlt: z.string().min(1),
   unitPrice: EthSchema,
   quantity: QuantitySchema,
   available: StockSchema,

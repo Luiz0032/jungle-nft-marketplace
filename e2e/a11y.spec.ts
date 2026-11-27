@@ -264,4 +264,23 @@ test.describe('acessibilidade @a11y', () => {
       expect(missing, path).toBe(0)
     }
   })
+
+  test('alt das artes descreve a imagem, não repete o título', async ({ page }) => {
+    await page.goto('/')
+    const card = page.getByTestId('nft-card').first()
+    const cardTitle = await card.locator('h3').innerText()
+    const cardAlt = (await card.locator('img').getAttribute('alt')) ?? ''
+    expect(cardAlt).toMatch(/^Ilustração de um /)
+    expect(cardAlt).not.toContain(cardTitle)
+
+    await page.goto('/nft/nft-001')
+    const title = await page.getByRole('heading', { level: 1 }).innerText()
+    // Imagem principal da galeria (os cards de "Mais desta coleção" repetem artes).
+    const main = page.locator('img[width="404"]')
+    await expect(main).toHaveAttribute('alt', /macaco de pelo castanho com óculos redondos/)
+    // Trocar a miniatura troca o alt junto com a arte.
+    await page.getByRole('button', { name: 'Ver imagem 2 de 3' }).click()
+    await expect(main).toHaveAttribute('alt', /gorila de pelo cinza/)
+    expect(await main.getAttribute('alt')).not.toContain(title)
+  })
 })

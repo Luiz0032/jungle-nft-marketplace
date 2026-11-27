@@ -86,8 +86,8 @@ type User = { id: string; name: string; email: string; avatarUrl: string | null 
 
 ```ts
 type Page<T> = { items: T[]; page: number; pageSize: number; total: number; totalPages: number }
-type NftSummary = { id; title; collection; image; price: Eth; available: number; version: number }
-type NftDetail = NftSummary & { description; images: string[]; creator; editions: Edition[] }
+type NftSummary = { id; title; collection; image; imageAlt; price: Eth; available: number; version: number }
+type NftDetail = NftSummary & { description; images: { src; alt }[]; creator; editions: Edition[] }
 type Edition = { id; label; price: Eth; available: number; version: number }
 ```
 
@@ -105,7 +105,7 @@ type Edition = { id; label; price: Eth; available: number; version: number }
 
 ```ts
 type Cart = { items: CartItem[]; version: number }
-type CartItem = { id; nftId; editionId; title; image; unitPrice: Eth; quantity: number; available: number }
+type CartItem = { id; nftId; editionId; title; image; imageAlt; unitPrice: Eth; quantity: number; available: number }
 ```
 
 ### Cotação
@@ -144,7 +144,7 @@ Implementação em `src/contracts/*.ts` (sem alias `@/`, para os specs importare
 - `CartItem.editionLabel` adicionado. Carrinho: somar quantidade da mesma edição; exceder estoque → 409 `AVAILABILITY_CONFLICT` com `details: { editionId, available }`. Merge ignora itens inválidos/esgotados e limita ao estoque.
 - `POST /quote` é **pública** (carrinho de convidado); com Bearer, a cotação fica vinculada ao usuário. Cupom case-insensitive. Taxa de rede fixa `0.0025`. `version` = soma das versões das edições cotadas. Validade 5 min. Erros de cupom vêm com `fields.coupon`.
 - `POST /orders`: sem `Idempotency-Key` → 422. Replay (mesma key + mesmo payload, comparação por JSON com chaves ordenadas, escopo por usuário) → **200** com o estado atual do pedido. Cotação inexistente/de outro usuário/expirada/versão diferente/preço ou estoque mudou desde a cotação → 409 `QUOTE_OUTDATED`. `walletId` deve ser do usuário e `network` igual à da carteira (senão 422). Estoque é **reservado** na criação e devolvido se `rejected`. Pedido assenta 2 s depois (5 s no `slow`), por timer ou preguiçosamente na próxima requisição (sobrevive a refresh).
-- `Receipt` = `{ lines: {nftId, editionId, title, editionLabel, image, unitPrice, quantity, lineTotal}[], subtotal, discount, networkFee, total, coupon: string|null, wallet: {id,label,address}, network, collector }`; `order.receipt` só é preenchido quando `confirmed`. `Network` ∈ `ethereum|polygon|base`.
+- `Receipt` = `{ lines: {nftId, editionId, title, editionLabel, image, imageAlt, unitPrice, quantity, lineTotal}[], subtotal, discount, networkFee, total, coupon: string|null, wallet: {id,label,address}, network, collector }`; `order.receipt` só é preenchido quando `confirmed`. `Network` ∈ `ethereum|polygon|base`.
 - `GET /wallets` → `Wallet[]`. `PATCH /wallets/:id` aceita `{ label?, primary?: true }` — só é possível **tornar** primária (as demais viram `false`), garantindo exatamente uma. A primeira carteira criada é primária.
 - Senha: 8–72 caracteres, com letra e número. `POST /profile/password` com senha atual errada → 422 `fields.current`; sucesso encerra as outras sessões. Avatar: data URL PNG/JPEG/WebP ≤ 1 MB decodificado.
 - Sessão dura 2 h. Sem header → 401 `UNAUTHENTICATED`; token desconhecido/expirado → 401 `SESSION_EXPIRED`.
@@ -153,7 +153,7 @@ Implementação em `src/contracts/*.ts` (sem alias `@/`, para os specs importare
 `request(schema, config)` → resposta validada pelo zod no interceptor (`config.schema`); `requestVoid(config)` para 204. Toda falha vira `ApiRequestError { code, status, fields, details }`, com `code` = `ErrorCode` do servidor ou `NETWORK_ERROR | TIMEOUT | INVALID_RESPONSE | UNKNOWN` (cliente). Cancelamento (`signal`) é repassado intacto. `isTransientError` (TRANSIENT/rede/timeout) é o único caso com retry automático de leitura. Token injetado via `setAuthTokenGetter` (ligado por `createAuth().install()`).
 
 ### Backend mock (`src/mocks`)
-- `db/`: estado único em memória, persistido em `localStorage['jungle-mock-db:v1']` após cada escrita; seed determinístico (`seed.ts`, PRNG mulberry32 com semente fixa): 48 NFTs `nft-001…nft-048`, edições `<id>-std|-rare|-leg` (a `std` sempre tem estoque), 6 coleções, 2 usuários com carteiras, cupons. Senhas: SHA-256(`salt:senha`) via `crypto.subtle`, salt por usuário (fixo nos 2 usuários do seed, para o banco ser determinístico; `randomHex(16)` no cadastro).
+- `db/`: estado único em memória, persistido em `localStorage['jungle-mock-db:v2']` após cada escrita (a versão da chave sobe quando o seed muda de forma incompatível; chaves antigas são apagadas no boot, então quem já visitou recebe o seed novo); seed determinístico (`seed.ts`, PRNG mulberry32 com semente fixa): 48 NFTs `nft-001…nft-048`, edições `<id>-std|-rare|-leg` (a `std` sempre tem estoque), 6 coleções, 2 usuários com carteiras, cupons. Senhas: SHA-256(`salt:senha`) via `crypto.subtle`, salt por usuário (fixo nos 2 usuários do seed, para o banco ser determinístico; `randomHex(16)` no cadastro).
 - `handlers/utils.ts#route`: toda rota `/api` passa por efeitos do cenário → assentamento de pedidos vencidos → resolver; erros são `throw apiError(...)` tipados; corpo validado com os schemas de `src/contracts` (422 com `fields`).
 - `events.ts`: barramento interno do servidor (`edition.changed`, `order.changed`) que `src/mocks/socket.ts` liga ao Socket.IO mock.
 - Imagens de NFT: as 4 artes do Figma em `public/assets/nft/<arte>-{400,800}.webp`, em rodízio determinístico no seed (3 por NFT). A app monta `srcset` 400w/800w (`nftImageProps`).
@@ -306,7 +306,7 @@ Fixtures: ≥ 40 NFTs (filtros/paginação), 2 usuários (`ana@jungle.test` / `S
 - **Movimento:** `prefers-reduced-motion` desliga shimmer, transições e rolagem suave (CSS global).
 
 ## 11. Desvios do Figma e acessibilidade
-- **Home/Detalhe:** artes de NFT do Figma em rodízio no seed (4 imagens para 48 NFTs, 3 por NFT). Coleções e nomes vêm do mock, não dos textos do Figma.
+- **Home/Detalhe:** artes de NFT do Figma em rodízio no seed (4 imagens para 48 NFTs, 3 por NFT). Cada arte define uma série (`SERIES` em `src/mocks/fixtures/catalog.ts`), numerada dentro dela: a arte principal dá o título e a descrição (Macaco Esmeralda, Gorila Andarilho, Chimpanzé Galerista, Orangotango Groove, #001–#012 cada). O `alt` vem da API (`imageAlt`, `images[].alt`) e descreve a arte, não o título; a fonte única dos textos é `src/lib/artworks.ts`, também usada pelas imagens estáticas da home. Nomes de coleção vêm do mock, não dos textos do Figma.
 - Busca: no desktop o Figma só tem o ícone no header; o campo fica no topo da sidebar de filtros (mesmo estilo do campo mobile "Explorar coleções"). O ícone do header leva ao catálogo.
 - Filtros: o bloco "Coleções" do Figma lista as **categorias** do contrato; o bloco "Rede" (o contrato não tem rede) lista as **coleções**. Contagens são reais (facetas). O slider de faixa de preço é feito com dois `<input type=range>` (teclado e leitor de tela nativos) + "Aplicar".
 - Abas "Todos os NFTs / Novos lançamentos / Em alta" = recorte `highlight`; "Ordenar por" é um `<select>` nativo estilizado.
@@ -374,6 +374,7 @@ Fixtures: ≥ 40 NFTs (filtros/paginação), 2 usuários (`ana@jungle.test` / `S
 - Tempo real só existe dentro da mesma aba: o servidor Socket.IO mock roda na página, então uma compra em outra aba ou dispositivo não gera evento aqui. Para ver mudança de preço/estoque, use os cenários (`price-change`, `sold-out`) ou `window.__mock.updateEdition`.
 - E2E só em Chromium (desktop 1440 e mobile 390); Firefox/WebKit não fazem parte da suíte.
 - Regressão visual compara só em Linux (baselines da imagem oficial do Playwright); no Windows/macOS os 8 testes `@visual` são pulados.
+- **Categoria não descreve a técnica da arte.** O layout fornece só 4 ilustrações (primatas), reaproveitadas pelas 48 NFTs de todas as categorias; título, descrição e `alt` seguem a arte, mas a categoria (inclusive "Fotografia") é metadado do catálogo para os filtros, não a técnica da imagem.
 - **Token de sessão em `localStorage`** (`jg:session`, `src/lib/storage.ts`), legível por qualquer script da página. Aceito porque o backend é mock no navegador. Em produção o token iria em cookie `httpOnly; Secure; SameSite`, emitido pelo servidor, com proteção CSRF.
 - **Sem Content-Security-Policy.** O `vercel.json` envia em todas as rotas só `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin` e `X-Frame-Options: DENY`. A mitigação de XSS hoje é o próprio React (o `src/` não usa `dangerouslySetInnerHTML`, `innerHTML`, `eval`, `new Function` nem `target="_blank"`). Em produção: CSP restritiva (`script-src 'self'`, `connect-src` da API/socket, `frame-ancestors 'none'`). Ficou fora porque o MSW roda via service worker e a CSP precisaria de testes próprios.
 - **`pnpm audit --prod` (2026-11-27): nenhuma vulnerabilidade conhecida** (0 info/low/moderate/high/critical em 144 dependências de produção).

@@ -8,6 +8,7 @@ export type SummaryLine = {
   title: string
   editionLabel: string
   image: string | null
+  imageAlt: string
   unitPrice: Eth
   quantity: number
   lineTotal: Eth
@@ -48,7 +49,7 @@ export function OrderSummary({
             {l.image ? (
               <img
                 {...nftImageProps(l.image, '70px')}
-                alt=""
+                alt={l.imageAlt}
                 width={70}
                 height={70}
                 loading="lazy"

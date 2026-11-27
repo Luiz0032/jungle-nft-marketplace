@@ -28,6 +28,7 @@ export const ReceiptLineSchema = z.object({
   title: z.string(),
   editionLabel: z.string(),
   image: z.string(),
+  imageAlt: z.string(),
   unitPrice: EthSchema,
   quantity: QuantitySchema,
   lineTotal: EthSchema,

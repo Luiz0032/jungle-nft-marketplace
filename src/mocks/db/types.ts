@@ -5,6 +5,7 @@ import type {
   Eth,
   GuestItem,
   Network,
+  NftImage,
   Order,
   Quote,
   Receipt,
@@ -28,7 +29,7 @@ export type NftRecord = {
   collection: CollectionRef
   category: CategorySlug
   description: string
-  images: string[]
+  images: NftImage[]
   creator: { name: string; address: string }
   editions: Edition[]
   version: number
@@ -65,7 +66,7 @@ export type OrderRecord = {
 export type CouponRecord = { code: string; percent: number; expiresAt: string }
 
 export type DbState = {
-  schemaVersion: 2
+  schemaVersion: 3
   seq: number
   users: UserRecord[]
   sessions: SessionRecord[]

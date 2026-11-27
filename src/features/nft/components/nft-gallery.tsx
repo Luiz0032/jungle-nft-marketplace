@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import type { NftImage } from '@/contracts'
 import { FavoriteButton } from '@/features/favorites/components/favorite-button'
 import { nftImageProps } from '@/lib/images'
 import { cn } from '@/lib/utils'
@@ -7,7 +8,7 @@ import { cn } from '@/lib/utils'
  * Galeria — Figma "Product Images" (70363:239): coluna de miniaturas 100×100 (gap 16) + imagem principal
  * 444×444 (arte 404 com respiro de 20) e coração no canto. Mobile (70396:241): imagem cheia + miniaturas em linha.
  */
-export function NftGallery({ nftId, title, images }: { nftId: string; title: string; images: string[] }) {
+export function NftGallery({ nftId, title, images }: { nftId: string; title: string; images: NftImage[] }) {
   const [index, setIndex] = useState(0)
   const current = images[index] ?? images[0]!
 
@@ -15,7 +16,7 @@ export function NftGallery({ nftId, title, images }: { nftId: string; title: str
     <div className="flex flex-col-reverse gap-4 lg:flex-row lg:gap-7">
       {images.length > 1 && (
         <ul aria-label="Imagens do NFT" className="flex gap-3 lg:flex-col lg:gap-4">
-          {images.map((src, i) => (
+          {images.map(({ src }, i) => (
             <li key={`${src}-${i}`}>
               <button
                 type="button"
@@ -35,8 +36,8 @@ export function NftGallery({ nftId, title, images }: { nftId: string; title: str
       )}
       <div className="relative rounded-[20px] bg-surface p-0 lg:size-[444px] lg:p-5">
         <img
-          {...nftImageProps(current, '(min-width: 1024px) 404px, 100vw')}
-          alt={`${title} — imagem ${index + 1} de ${images.length}`}
+          {...nftImageProps(current.src, '(min-width: 1024px) 404px, 100vw')}
+          alt={current.alt}
           width={404}
           height={404}
           fetchPriority="high"

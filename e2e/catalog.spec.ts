@@ -46,10 +46,10 @@ test.describe('catálogo @catalog', () => {
     await expect.poll(() => urlSearch(page)).toEqual({ q: undefined, category: ['arte'], sort: undefined, page: undefined })
 
     // busca (debounce) combinada com o filtro
-    await searchbox(page).fill('Onça')
-    await expect.poll(() => urlSearch(page).q).toBe('Onça')
+    await searchbox(page).fill('Gorila')
+    await expect.poll(() => urlSearch(page).q).toBe('Gorila')
     await expect(grid(page)).toHaveAttribute('aria-busy', 'false')
-    for (const title of await cards(page).locator('h3').allInnerTexts()) expect(title).toContain('Onça')
+    for (const title of await cards(page).locator('h3').allInnerTexts()) expect(title).toContain('Gorila')
 
     // ordenação
     await page.getByLabel('Ordenar por:').selectOption('price_asc')
@@ -89,7 +89,7 @@ test.describe('catálogo @catalog', () => {
     await setScenario(page, 'out-of-order')
     await page.goto('/')
     // Cada busca responde MAIS RÁPIDO que a anterior: a primeira chega por último.
-    for (const term of ['Onça', 'Arara', 'Mico']) {
+    for (const term of ['Macaco', 'Gorila', 'Orangotango']) {
       await searchbox(page).fill(term)
       await expect.poll(() => urlSearch(page).q).toBe(term)
     }
@@ -97,7 +97,7 @@ test.describe('catálogo @catalog', () => {
     await page.waitForTimeout(3_000) // deixa as respostas atrasadas chegarem
     const titles = await cards(page).locator('h3').allInnerTexts()
     expect(titles.length).toBeGreaterThan(0)
-    for (const t of titles) expect(t).toContain('Mico')
+    for (const t of titles) expect(t).toContain('Orangotango')
   })
 
   test('estados: skeleton, vazio com limpar filtros, erro com retry', async ({ page }) => {

@@ -1,12 +1,8 @@
 import Big from 'big.js'
 import { toEth } from '@/lib/money'
-import {
-  ADJECTIVES,
-  COLLECTIONS,
-  CREATORS,
-  EDITION_TIERS,
-  NOUNS,
-} from '@/mocks/fixtures/catalog'
+import type { NftImage } from '@/contracts'
+import { ARTWORKS, artworkUrl } from '@/lib/artworks'
+import { COLLECTIONS, CREATORS, EDITION_TIERS, SERIES } from '@/mocks/fixtures/catalog'
 import { hashPassword } from '@/mocks/lib/crypto'
 import { createRng } from '@/mocks/lib/random'
 import type { DbState, NftRecord, UserRecord } from './types'
@@ -20,19 +16,26 @@ export const SEED_USERS = [
   { id: 'usr-bruno', name: 'Bruno Lima', email: 'bruno@jungle.test', password: 'Senha@123', salt: 'seed-salt-bruno' },
 ] as const
 
-/** Artes do Figma (public/assets/nft, webp 400/800). Cada NFT usa 3 delas em rodízio. */
-const ARTWORKS = ['emerald-ape', 'sage-nomad', 'neon-vessel', 'golden-beat'] as const
-export const imageUrl = (nftIndex: number, k: number) =>
-  `/assets/nft/${ARTWORKS[(nftIndex + k) % ARTWORKS.length]}-800.webp`
+/**
+ * Artes do Figma (public/assets/nft, webp 400/800). Cada NFT usa 3 delas em rodízio; a primeira é a da
+ * série (título e descrição combinam com ela) e cada imagem leva o alt que descreve aquela arte.
+ */
+export const nftImage = (nftIndex: number, k: number): NftImage => {
+  const artwork = SERIES[(nftIndex + k) % SERIES.length]!.artwork
+  return { src: artworkUrl(artwork), alt: ARTWORKS[artwork] }
+}
+
+const pad3 = (n: number) => String(n).padStart(3, '0')
 
 function buildNfts(): NftRecord[] {
   const rng = createRng(SEED)
   return Array.from({ length: NFT_COUNT }, (_, i) => {
     const n = i + 1
-    const id = `nft-${String(n).padStart(3, '0')}`
+    const id = `nft-${pad3(n)}`
     const collection = COLLECTIONS[i % COLLECTIONS.length]!
-    const noun = NOUNS[i % NOUNS.length]!
-    const adjective = rng.pick(ADJECTIVES)
+    const series = SERIES[i % SERIES.length]!
+    // Sorteio que antes escolhia o adjetivo do título: mantido para preços, estoque e categorias não mudarem.
+    rng.next()
     const baseMilli = rng.int(8, 2400)
     const tierCount = rng.int(1, 3)
     const editions = EDITION_TIERS.slice(0, tierCount).map((tier) => ({
@@ -42,15 +45,15 @@ function buildNfts(): NftRecord[] {
       available: rng.int(tier.stock[0], tier.stock[1]),
       version: 1,
     }))
-    const title = `${noun} ${adjective} #${String(n).padStart(3, '0')}`
+    const title = `${series.name} #${pad3(Math.floor(i / SERIES.length) + 1)}`
     return {
       id,
       title,
       collection: { slug: collection.slug, name: collection.name },
       // A maioria segue a categoria da coleção; ~1/4 varia para os filtros combinarem de forma interessante.
       category: rng.next() < 0.25 ? rng.pick(['arte', 'games', 'musica', 'fotografia', 'colecionaveis'] as const) : collection.category,
-      description: `${title} faz parte da coleção ${collection.name}. Peça digital única, cunhada para colecionadores da selva.`,
-      images: [0, 1, 2].map((k) => imageUrl(i, k)),
+      description: `${series.blurb} ${title} faz parte da coleção ${collection.name}. Peça digital única, cunhada para colecionadores.`,
+      images: [0, 1, 2].map((k) => nftImage(i, k)),
       creator: { name: rng.pick(CREATORS), address: `0x${rng.hex(40)}` },
       editions,
       version: 1,
@@ -76,7 +79,7 @@ async function buildUsers(): Promise<UserRecord[]> {
 export async function createSeed(): Promise<DbState> {
   const rng = createRng(SEED + 1)
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
     seq: 0,
     users: await buildUsers(),
     sessions: [],

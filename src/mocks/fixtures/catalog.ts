@@ -1,4 +1,5 @@
 import type { CategorySlug, CollectionRef } from '@/contracts'
+import type { ArtworkSlug } from '@/lib/artworks'
 
 export const COLLECTIONS: (CollectionRef & { category: CategorySlug })[] = [
   { slug: 'selva-neon', name: 'Selva Neon', category: 'arte' },
@@ -17,30 +18,31 @@ export const CATEGORIES: { slug: CategorySlug; name: string }[] = [
   { slug: 'colecionaveis', name: 'Colecionáveis' },
 ]
 
-export const NOUNS = [
-  'Onça',
-  'Arara',
-  'Tucano',
-  'Jiboia',
-  'Capivara',
-  'Mico',
-  'Preguiça',
-  'Boto',
-  'Jacaré',
-  'Sapo',
-  'Beija-flor',
-  'Tamanduá',
-]
-
-export const ADJECTIVES = [
-  'Elétrica',
-  'Cósmica',
-  'Dourada',
-  'Noturna',
-  'Holográfica',
-  'Ancestral',
-  'Prismática',
-  'Selvagem',
+/**
+ * Uma série por arte (`src/lib/artworks.ts`). O NFT de índice `i` tem como arte principal `SERIES[i % 4]`
+ * e é numerado dentro da série (#001…#012). `blurb` completa a descrição e combina com a imagem.
+ */
+export const SERIES: { artwork: ArtworkSlug; name: string; blurb: string }[] = [
+  {
+    artwork: 'emerald-ape',
+    name: 'Macaco Esmeralda',
+    blurb: 'Um macaco de óculos redondos, jaqueta college verde e pingente de esmeralda no peito: estilo de quem já chegou.',
+  },
+  {
+    artwork: 'sage-nomad',
+    name: 'Gorila Andarilho',
+    blurb: 'Um gorila de pelo prateado, chapéu bucket verde-oliva e moletom lilás, sempre pronto para a próxima trilha.',
+  },
+  {
+    artwork: 'neon-vessel',
+    name: 'Chimpanzé Galerista',
+    blurb: 'Um chimpanzé de brinco dourado, blazer bege e gola alta verde-escura, com o olhar de quem faz a curadoria da cena.',
+  },
+  {
+    artwork: 'golden-beat',
+    name: 'Orangotango Groove',
+    blurb: 'Um orangotango de pelo dourado com fones verdes e jaqueta bomber creme, embalado pela própria batida.',
+  },
 ]
 
 export const CREATORS = ['Lia Ramos', 'Kauã Tupi', 'Marina Flor', 'Davi Neon', 'Iara Costa', 'Theo Mata']

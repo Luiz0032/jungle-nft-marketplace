@@ -23,6 +23,8 @@ export const NftSummarySchema = z.object({
   collection: CollectionRefSchema,
   category: CategorySlugSchema,
   image: z.string().min(1),
+  /** Texto alternativo da arte principal: descreve a imagem, não repete o título. */
+  imageAlt: z.string().min(1),
   /** Menor preço entre as edições disponíveis (ou entre todas, se esgotado). */
   price: EthSchema,
   /** Soma do estoque das edições. */
@@ -33,9 +35,12 @@ export type NftSummary = z.infer<typeof NftSummarySchema>
 
 export const CreatorSchema = z.object({ name: z.string(), address: z.string() })
 
+export const NftImageSchema = z.object({ src: z.string().min(1), alt: z.string().min(1) })
+export type NftImage = z.infer<typeof NftImageSchema>
+
 export const NftDetailSchema = NftSummarySchema.extend({
   description: z.string(),
-  images: z.array(z.string().min(1)).min(1),
+  images: z.array(NftImageSchema).min(1),
   creator: CreatorSchema,
   editions: z.array(EditionSchema).min(1),
 })

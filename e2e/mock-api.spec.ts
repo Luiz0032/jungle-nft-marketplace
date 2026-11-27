@@ -40,9 +40,9 @@ test.describe('API mock @api', () => {
     const ranged = NftPageSchema.parse((await api(page, 'GET', '/nfts?minPrice=0.5&maxPrice=1&pageSize=48')).body)
     expect(ranged.items.every((n) => Number(n.price) >= 0.5 && Number(n.price) <= 1)).toBe(true)
 
-    const search = NftPageSchema.parse((await api(page, 'GET', '/nfts?q=on%C3%A7a&pageSize=48')).body)
+    const search = NftPageSchema.parse((await api(page, 'GET', '/nfts?q=gorila&pageSize=48')).body)
     expect(search.items.length).toBeGreaterThan(0)
-    expect(search.items.every((n) => n.title.toLowerCase().includes('onça'))).toBe(true)
+    expect(search.items.every((n) => n.title.toLowerCase().includes('gorila'))).toBe(true)
 
     // Determinismo do seed.
     const detail = NftDetailSchema.parse((await api(page, 'GET', '/nfts/nft-001')).body)
@@ -83,7 +83,7 @@ test.describe('API mock @api', () => {
     expect((await api(page, 'POST', '/auth/logout', { token: session.token })).status).toBe(204)
     expect(errorCode((await api(page, 'GET', '/auth/session', { token: session.token })).body)).toBe('SESSION_EXPIRED')
 
-    const stored = await page.evaluate(() => localStorage.getItem('jungle-mock-db:v1') ?? '')
+    const stored = await page.evaluate(() => localStorage.getItem('jungle-mock-db:v2') ?? '')
     expect(stored).not.toContain('Senha@123')
     expect(stored).not.toContain('Segura123')
   })
@@ -218,6 +218,31 @@ test.describe('API mock @api', () => {
 
     await setScenario(page, 'offline')
     expect((await api(page, 'GET', '/nfts')).networkError).toBe(true)
+  })
+
+  test('banco persistido: chave antiga é descartada, seed atual carrega e ?reset=1 restaura', async ({ page }) => {
+    const ready = () => page.waitForFunction(() => window.__mock !== undefined)
+    const stock = async () =>
+      NftDetailSchema.parse((await api(page, 'GET', '/nfts/nft-001')).body).editions.find((e) => e.id === 'nft-001-std')!.available
+
+    // Visitante com o banco da versão anterior: a chave v1 some e vale o seed novo.
+    await page.evaluate(() => localStorage.setItem('jungle-mock-db:v1', JSON.stringify({ schemaVersion: 2, nfts: [] })))
+    await page.reload()
+    await ready()
+    expect(await page.evaluate(() => localStorage.getItem('jungle-mock-db:v1'))).toBeNull()
+    const nft = NftDetailSchema.parse((await api(page, 'GET', '/nfts/nft-001')).body)
+    expect(nft.title).toBe('Macaco Esmeralda #001')
+    expect(nft.images[0]!.src).toContain('emerald-ape')
+
+    // Mudança persiste entre recargas; ?reset=1 volta ao seed.
+    const original = await stock()
+    await page.evaluate(() => window.__mock!.updateEdition('nft-001-std', { available: 0 }))
+    await page.reload()
+    await ready()
+    expect(await stock()).toBe(0)
+    await page.goto('/?reset=1')
+    await ready()
+    expect(await stock()).toBe(original)
   })
 
   test('cenários: flaky é reproduzível e ?scenario seleciona pela URL', async ({ page }) => {

@@ -26,6 +26,7 @@ export type CartLine = {
   title: string
   editionLabel: string
   image: string
+  imageAlt: string
   unitPrice: Eth
   quantity: number
   available: number
@@ -91,7 +92,8 @@ export function useCart(): CartView {
         editionId: edition.id,
         title: nft.title,
         editionLabel: edition.label,
-        image: nft.images[0]!,
+        image: nft.images[0]!.src,
+        imageAlt: nft.images[0]!.alt,
         unitPrice: edition.price,
         quantity: item.quantity,
         available: edition.available,

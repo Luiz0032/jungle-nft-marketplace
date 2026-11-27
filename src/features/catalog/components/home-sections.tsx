@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import { ArrowRight } from 'lucide-react'
+import { ARTWORKS, type ArtworkSlug, artworkUrl } from '@/lib/artworks'
 import { nftImageProps } from '@/lib/images'
 import { nftListQuery } from '../queries'
 
@@ -41,8 +42,8 @@ export function HomeHero() {
         </a>
       </div>
       <img
-        {...nftImageProps('/assets/nft/emerald-ape-800.webp', '(min-width: 1024px) 450px, 140px')}
-        alt="Emerald Ape, primata de óculos redondos e jaqueta verde"
+        {...nftImageProps(artworkUrl('emerald-ape'), '(min-width: 1024px) 450px, 140px')}
+        alt={ARTWORKS['emerald-ape']}
         width={450}
         height={450}
         fetchPriority="high"
@@ -76,7 +77,7 @@ export function FeaturedNft() {
         <Link to="/nft/$id" params={{ id: nft.id }} className="group relative block outline-none focus-visible:ring-2 focus-visible:ring-ring">
           <img
             {...nftImageProps(nft.image, '310px')}
-            alt=""
+            alt={nft.imageAlt}
             width={310}
             height={368}
             loading="lazy"
@@ -97,13 +98,13 @@ const promos = [
   {
     title: 'Lançamentos gênesis de edição limitada',
     text: 'Colecione edições escassas diretamente dos criadores antes da revelação pública.',
-    image: '/assets/nft/emerald-ape-800.webp',
+    image: 'emerald-ape' as ArtworkSlug,
     search: { highlight: 'new' as const },
   },
   {
     title: 'Arte digital selecionada e muito mais',
     text: 'Explore novos artistas, coleções verificadas e obras digitais que definem a nova cultura.',
-    image: '/assets/nft/neon-vessel-800.webp',
+    image: 'neon-vessel' as ArtworkSlug,
     search: { category: ['arte' as const] },
   },
 ]
@@ -114,8 +115,8 @@ export function Promos() {
       {promos.map((p) => (
         <article key={p.title} className="flex overflow-hidden rounded-[10px] bg-surface">
           <img
-            {...nftImageProps(p.image, '(min-width: 1024px) 287px, 40vw')}
-            alt=""
+            {...nftImageProps(artworkUrl(p.image), '(min-width: 1024px) 287px, 40vw')}
+            alt={ARTWORKS[p.image]}
             width={287}
             height={250}
             loading="lazy"
@@ -146,28 +147,28 @@ const posts = [
     read: 6,
     title: 'Como funciona a propriedade de NFTs',
     text: 'Aprenda a colecionar, negociar e verificar ativos digitais.',
-    image: 'neon-vessel',
+    image: 'neon-vessel' as ArtworkSlug,
   },
   {
     date: '13 de setembro',
     read: 2,
     title: '10 artistas digitais para acompanhar',
     text: 'Conheça criadores que moldam a cultura digital.',
-    image: 'emerald-ape',
+    image: 'emerald-ape' as ArtworkSlug,
   },
   {
     date: '15 de setembro',
     read: 3,
     title: 'Raridade, atributos e procedência',
     text: 'Entenda raridade, procedência, direitos autorais e utilidade.',
-    image: 'sage-nomad',
+    image: 'sage-nomad' as ArtworkSlug,
   },
   {
     date: '15 de setembro',
     read: 2,
     title: 'Como proteger sua carteira',
     text: 'Proteja sua carteira, seus ativos e sua identidade.',
-    image: 'golden-beat',
+    image: 'golden-beat' as ArtworkSlug,
   },
 ]
 
@@ -188,8 +189,8 @@ export function Journal() {
           <li key={p.title}>
             <article className="flex h-full flex-col overflow-hidden rounded-[10px] bg-surface">
               <img
-                {...nftImageProps(`/assets/nft/${p.image}-800.webp`, '(min-width: 1024px) 268px, 50vw')}
-                alt=""
+                {...nftImageProps(artworkUrl(p.image), '(min-width: 1024px) 268px, 50vw')}
+                alt={ARTWORKS[p.image]}
                 width={268}
                 height={195}
                 loading="lazy"

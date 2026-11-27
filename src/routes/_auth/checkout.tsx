@@ -281,6 +281,7 @@ function toSummaryLines(quote: Quote, lines: CartLine[]): SummaryLine[] {
       title: line?.title ?? q.editionId,
       editionLabel: line?.editionLabel ?? '',
       image: line?.image ?? null,
+      imageAlt: line?.imageAlt ?? '',
       unitPrice: q.unitPrice,
       quantity: q.quantity,
       lineTotal: q.lineTotal,
